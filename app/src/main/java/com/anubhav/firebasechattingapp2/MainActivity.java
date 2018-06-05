@@ -22,8 +22,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView.LayoutManager mLayoutManager;
     RecyclerView listOfUsers;
     ActionBar actionBar;
+    DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
     User user;
 
     @Override
@@ -123,8 +128,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initialize() {
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-        FirebaseDatabase.getInstance().getReference("Chats").keepSynced(true);
+      /*  FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        FirebaseDatabase.getInstance().getReference("Chats").keepSynced(true);*/
+
         actionBar = getSupportActionBar();
         listOfUsers = findViewById(R.id.list_of_users);
         mLayoutManager = new LinearLayoutManager(this);
@@ -136,7 +142,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
-        Query query = FirebaseDatabase.getInstance().getReference("Users").orderByValue();
+        userDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+        Query query = userDatabase.orderByValue();
         FirebaseRecyclerOptions<User> options = new FirebaseRecyclerOptions.Builder<User>()
                 .setQuery(query , User.class)
                 .build();
