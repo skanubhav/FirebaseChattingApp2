@@ -30,6 +30,7 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -65,6 +66,7 @@ public class ChatActivity extends AppCompatActivity {
     private EditText message_input;
     private FloatingActionButton fab;
     private CardView attachCard;
+    private FrameLayout attachFrameLayout;
     private StorageReference UploadRef;
 
     // Sender and Receiver Data
@@ -111,10 +113,13 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId()==R.id.attach_file) {
-            if(attachCard.getVisibility()==View.GONE)
-                attachCard.setVisibility(View.VISIBLE);
-            else if (attachCard.getVisibility()==View.VISIBLE)
-                attachCard.setVisibility(View.GONE);
+            if(attachFrameLayout.getVisibility()==View.GONE){
+                attachFrameLayout.setVisibility(View.VISIBLE);
+            }
+
+            else if (attachFrameLayout.getVisibility()==View.VISIBLE){
+                attachFrameLayout.setVisibility(View.GONE);
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -395,6 +400,14 @@ public class ChatActivity extends AppCompatActivity {
                         launchAttachDocument();
                     }
                 });
+
+        attachFrameLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(attachFrameLayout.getVisibility()==View.VISIBLE)
+                    attachFrameLayout.setVisibility(View.GONE);
+            }
+        });
     }
 
     // Select image
@@ -476,6 +489,7 @@ public class ChatActivity extends AppCompatActivity {
         fab = findViewById(R.id.fab);
         message_input = findViewById(R.id.message_input);
         attachCard = findViewById(R.id.attach_card);
+        attachFrameLayout = findViewById(R.id.attach_activity_layout);
 
         layoutAnimationController = AnimationUtils.loadLayoutAnimation(listOfMessages.getContext(),R.anim.layout_slide_from_bottom);
         listOfMessages.setLayoutAnimation(layoutAnimationController);
