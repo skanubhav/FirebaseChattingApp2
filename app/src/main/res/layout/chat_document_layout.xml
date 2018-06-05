@@ -30,12 +30,23 @@
                 android:textColor="@color/messageText"
                 android:textStyle="normal|bold" />
 
+            <TextView
+                android:id="@+id/messages_document_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/message_time"
+                android:layout_toRightOf="@id/message_document"
+                android:maxWidth="200dp"
+                android:text="Default"
+                android:layout_centerVertical="true"/>
+
             <ImageButton
                 android:id="@+id/message_document"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_below="@id/message_time"
-                android:background="@drawable/ic_attach_document"/>
+                android:background="@drawable/ic_attach_document"
+                android:layout_centerVertical="true"/>
 
         </RelativeLayout>
 

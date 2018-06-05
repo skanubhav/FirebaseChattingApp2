@@ -145,26 +145,6 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         setVideoListener(holder.message_video, model.getMessageText());
     }
 
-    private Drawable getIcon(String videoURL, RelativeLayout message_view) {
-        Bitmap bitmap = null;
-        MediaMetadataRetriever mediaMetadataRetriever = null;
-
-        try{
-            mediaMetadataRetriever = new MediaMetadataRetriever();
-            mediaMetadataRetriever.setDataSource(videoURL, new HashMap<String, String>());
-            bitmap = mediaMetadataRetriever.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST);
-        }
-        catch (Exception e){
-
-        }
-        finally {
-            if(mediaMetadataRetriever!=null)
-                mediaMetadataRetriever.release();
-        }
-        Drawable thumbnailDrawable = new BitmapDrawable(message_view.getContext().getResources(),bitmap);
-        return thumbnailDrawable;
-    }
-
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
         boolean plaWhenReady = false;
         int currentWindow = 0;
@@ -187,51 +167,56 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
     }
 
     private void handleDocumentMessage(final DocumentViewHolder holder, final ChatMessage model) {
-       holder.message_document.setOnClickListener(new View.OnClickListener() {
-           @Override
-           public void onClick(View v) {
+
+        final StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(model.getMessageText());
+        storageReference.getMetadata().addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
+            @Override
+            public void onComplete(@NonNull Task<StorageMetadata> task) {
+                final String contentType = task.getResult().getContentType();
+
+                holder.message_document_name.setText(task.getResult().getName());
+
+                holder.message_document.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
                /*Intent intent = new Intent(holder.message_document.getContext(),DocumentViewerActivity.class);
                intent.putExtra("DocumentURL", model.getMessageText());
                holder.message_document.getContext().startActivity(intent);*/
-               StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(model.getMessageText());
-               storageReference.getMetadata().addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
-                   @Override
-                   public void onComplete(@NonNull Task<StorageMetadata> task) {
-                       String contentType = task.getResult().getContentType();
-                       Log.d("ContentType",contentType);
-                       Intent intent = new Intent(Intent.ACTION_VIEW);
-                       if(contentType.equals("application/pdf")) {
-                           Log.d("ContentType",contentType);
-                           intent.setDataAndType(Uri.parse(model.getMessageText()), "application/pdf");
-                       }
-                       else if(contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") || contentType.equals("application/msword")){
-                           Log.d("ContentType",contentType);
-                           intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.document");
-                       }
-                       else if(contentType.equals("application/vnd.ms-powerpoint") ||contentType.equals("application/vnd.openxmlformats-officedocument.presentationml.presentation")) {
-                           Log.d("ContentType",contentType);
-                           intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.presentation");
-                       }
-                       else if(contentType.equals("application/vnd.ms-excel") || contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-                           Log.d("ContentType",contentType);
-                           intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.spreadsheet");
-                       }
-                       else if(contentType.equals("text/plain")) {
-                           Log.d("ContentType",contentType);
-                           intent.setDataAndType(Uri.parse(model.getMessageText()), "text/plain");
-                       }
-                       intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                       Intent newIntent = Intent.createChooser(intent, "Open File");
-                       try {
-                           holder.message_document.getContext().startActivity(newIntent);
-                       } catch (ActivityNotFoundException e) {
-                       }
-                   }
-               });
+                        Log.d("ContentType",contentType);
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        if(contentType.equals("application/pdf")) {
+                            Log.d("ContentType",contentType);
+                            intent.setDataAndType(Uri.parse(model.getMessageText()), "application/pdf");
+                        }
+                        else if(contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") || contentType.equals("application/msword")){
+                            Log.d("ContentType",contentType);
+                            intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.document");
+                        }
+                        else if(contentType.equals("application/vnd.ms-powerpoint") ||contentType.equals("application/vnd.openxmlformats-officedocument.presentationml.presentation")) {
+                            Log.d("ContentType",contentType);
+                            intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.presentation");
+                        }
+                        else if(contentType.equals("application/vnd.ms-excel") || contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+                            Log.d("ContentType",contentType);
+                            intent.setDataAndType(Uri.parse(model.getMessageText()), "application/vnd.google-apps.spreadsheet");
+                        }
+                        else if(contentType.equals("text/plain")) {
+                            Log.d("ContentType",contentType);
+                            intent.setDataAndType(Uri.parse(model.getMessageText()), "text/plain");
+                        }
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        Intent newIntent = Intent.createChooser(intent, "Open File");
+                        try {
+                            holder.message_document.getContext().startActivity(newIntent);
+                        } catch (ActivityNotFoundException e) {
+                        }
+                    }
+                });
+            }
+        });
+
 
            }
-       });
-    }
 
     private void setImageListener(final ImageView message_image, final String imageURL) {
         message_image.setOnClickListener(new View.OnClickListener() {

@@ -3,6 +3,7 @@ package com.anubhav.firebasechattingapp2;
 import android.app.Notification;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PersistableBundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -213,7 +215,7 @@ public class ChatActivity extends AppCompatActivity {
         }
         else {
             if(new File(data.getPath()).length()<=26214400) {
-                String fileName = new Date().getTime() + data.getLastPathSegment() ;
+                String fileName = new Date().getTime() + getFileName(data);
                 UploadRef = storageReference.child(typeOfData + "/" + fileName);
                 UploadTask uploadTask = UploadRef.putFile(data);
 
@@ -225,10 +227,32 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
     // compress image before sending as byte stream
     private void compressAndSendImage (Uri data) throws IOException {
         byte[] bdata = compressImage(data);
-        String fileName = new Date().getTime() + data.getLastPathSegment() ;
+        String fileName = new Date().getTime() + getFileName(data) ;
         UploadRef = storageReference.child("Images/" + fileName);
         UploadTask uploadTask = UploadRef.putBytes(bdata);
 
