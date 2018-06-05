@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "827388955795",
+    "firebase_url": "https://fir-messaging-app-197ee.firebaseio.com",
+    "project_id": "fir-messaging-app-197ee",
+    "storage_bucket": "fir-messaging-app-197ee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827388955795:android:d1a10bfddf182ce5",
+        "android_client_info": {
+          "package_name": "com.anubhav.firebasechattingapp2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "827388955795-do7te5kn1ogstjja7s8no0llckrdp6vm.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "827388955795-do7te5kn1ogstjja7s8no0llckrdp6vm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOfVS375Kb_C-Vr01NmkJcXS1lbW_C_Ig"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

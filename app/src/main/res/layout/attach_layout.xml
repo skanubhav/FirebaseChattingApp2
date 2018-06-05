@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <ImageView
+        android:id="@+id/attach_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_attach_image"
+        app:layout_constraintEnd_toStartOf="@+id/attach_camera"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="20dp" />
+
+
+    <ImageView
+        android:id="@+id/attach_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_attach_camera"
+        app:layout_constraintEnd_toStartOf="@+id/attach_video"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/attach_image"
+        tools:layout_editor_absoluteY="20dp" />
+
+
+    <ImageView
+        android:id="@+id/attach_video"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_attach_video"
+        app:layout_constraintEnd_toStartOf="@+id/attach_audio"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/attach_camera"
+        tools:layout_editor_absoluteY="20dp" />
+
+    <ImageView
+        android:id="@+id/attach_audio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_attach_audio"
+        app:layout_constraintEnd_toStartOf="@+id/attach_document"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/attach_video"
+        tools:layout_editor_absoluteY="20dp" />
+
+
+    <ImageView
+        android:id="@+id/attach_document"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_attach_document"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/attach_audio"
+        tools:layout_editor_absoluteY="20dp" />
+
+
+</android.support.constraint.ConstraintLayout>
