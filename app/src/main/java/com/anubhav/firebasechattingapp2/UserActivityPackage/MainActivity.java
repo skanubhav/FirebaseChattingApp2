@@ -1,12 +1,16 @@
 package com.anubhav.firebasechattingapp2.UserActivityPackage;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +20,7 @@ import android.view.animation.LayoutAnimationController;
 import android.widget.Toast;
 
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
+import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -31,15 +36,21 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     public static int SIGN_IN_REQUEST_CODE = 10;
-    FirebaseRecyclerAdapter mAdapter;
-    RecyclerView.LayoutManager mLayoutManager;
-    RecyclerView listOfUsers;
-    ActionBar actionBar;
-    DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
-    User user;
+    private UserRecyclerAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private RecyclerView listOfUsers;
+    private ActionBar actionBar;
+    private DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
+    public static User user;
+    private List<User> UserList;
+    private UserDBHelper userDBHelper = new UserDBHelper(this);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +58,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initialize();
         signIn();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mAdapter.stopListening();
     }
 
     @Override
@@ -81,6 +86,9 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
+        SQLiteDatabase database = userDBHelper.getWritableDatabase();
+        database.execSQL("delete from " + MessagingContract.UserDatabase.TABLE_NAME);
+        UserList.clear();
         return super.onOptionsItemSelected(item);
     }
 
@@ -97,7 +105,8 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
                 actionBar.setTitle("Welcome " + user.getUser());
-                displayUsers();
+                initializeCloudData();
+                initializeLocalData();
             }
             else {
                 Toast.makeText(this,
@@ -125,91 +134,98 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG)
                     .show();
             actionBar.setTitle("Welcome " + user.getUser());
-            displayUsers();
+            initializeCloudData();
+            initializeLocalData();
         }
     }
 
     private void initialize() {
-      /*  FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-        FirebaseDatabase.getInstance().getReference("Chats").keepSynced(true);*/
-
         actionBar = getSupportActionBar();
         listOfUsers = findViewById(R.id.list_of_users);
         mLayoutManager = new LinearLayoutManager(this);
-        initializeAdapter();
+        UserList = new ArrayList<>();
 
         LayoutAnimationController layoutAnimationController =
                 AnimationUtils.loadLayoutAnimation(listOfUsers.getContext(),R.anim.layout_fall_from_top);
         listOfUsers.setLayoutAnimation(layoutAnimationController);
     }
 
-    private void initializeAdapter() {
+    private boolean CheckIsInDBorNot(String Uid) {
+        String selectQuery = "SELECT  * FROM " + MessagingContract.UserDatabase.TABLE_NAME + " WHERE "
+                + MessagingContract.UserDatabase.COLUMN_ID +"='"+ Uid + "'";
+        SQLiteDatabase db = userDBHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.getCount() <= 0) {
+            cursor.close();
+            return false;
+        }
+        cursor.close();
+        return true;
+    }
+
+    public void displayUsers() {
+        mAdapter = new UserRecyclerAdapter(UserList);
+        listOfUsers.setLayoutManager(mLayoutManager);
+        listOfUsers.setAdapter(mAdapter);
+
+        listOfUsers.getAdapter().notifyDataSetChanged();
+        listOfUsers.scheduleLayoutAnimation();
+    }
+
+    private void initializeLocalData() {
+        SQLiteDatabase database = userDBHelper.getReadableDatabase();
+        String sortOrder = MessagingContract.UserDatabase.COLUMN_NAME + " ASC";
+        String[] projections = {
+                MessagingContract.UserDatabase.COLUMN_ID,
+                MessagingContract.UserDatabase.COLUMN_NAME
+        };
+
+        Cursor cursor = database.query(
+                MessagingContract.UserDatabase.TABLE_NAME,
+                projections,
+                null,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+
+        while(cursor.moveToNext()) {
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_NAME));
+            String id = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_ID));
+            Log.d("SQLiteDatabase", name + " " + id);
+            User newUser = new User (name, id);
+            if(!UserList.contains(newUser))
+                UserList.add(newUser);
+        }
+        displayUsers();
+    }
+
+    private void initializeCloudData() {
         userDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                SQLiteDatabase database = userDBHelper.getWritableDatabase();
                 for(DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-
+                    String Uid = postSnapshot.getValue(User.class).getUid();
+                    String Uname =  postSnapshot.getValue(User.class).getUser();
+                    if(!Uid.equals(user.getUid())) {
+                        if(!CheckIsInDBorNot(Uid)) {
+                            ContentValues values = new ContentValues();
+                            values.put(MessagingContract.UserDatabase.COLUMN_ID, Uid);
+                            values.put(MessagingContract.UserDatabase.COLUMN_NAME, Uname);
+                            database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
+                            UserList.add(new User(Uname, Uid));
+                            displayUsers();
+                        }
+                    }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
             }
         });
-        Query query = userDatabase.orderByValue();
-        FirebaseRecyclerOptions<User> options = new FirebaseRecyclerOptions.Builder<User>()
-                .setQuery(query , User.class)
-                .build();
-
-        mAdapter = new FirebaseRecyclerAdapter<User, userHolder>(options){
-            @Override
-            protected void onBindViewHolder(@NonNull userHolder holder, int position, @NonNull final User model) {
-                holder.user.setText(model.getUser());
-                if (model.getUid().equals(user.getUid())) {
-                    holder.user.setBackgroundColor(getResources().getColor(R.color.fui_linkColor));
-                }
-                else {
-                    setListener(holder, model);
-                }
-            }
-
-            @NonNull
-            @Override
-            public userHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View userView = getLayoutInflater().from(parent.getContext()).inflate(R.layout.user_view, parent, false);
-                return new userHolder(userView);
-            }
-        };
-
-    }
-
-    private void setListener(userHolder holder, final User model) {
-        holder.user.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                {
-                    Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-
-                    intent.putExtra("SenderID", user.getUid());
-                    intent.putExtra("SenderName", user.getUser());
-                    intent.putExtra("RecieverID", model.getUid());
-                    intent.putExtra("RecieverName", model.getUser());
-
-                    startActivity(intent);
-                }
-            }
-        });
-
-    }
-
-    public void displayUsers() {
-        listOfUsers.setLayoutManager(mLayoutManager);
-        listOfUsers.setAdapter(mAdapter);
-        mAdapter.startListening();
-
-        listOfUsers.getAdapter().notifyDataSetChanged();
-        listOfUsers.scheduleLayoutAnimation();
     }
 
     private void initializeUser() {
