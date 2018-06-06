@@ -1,4 +1,4 @@
-package com.anubhav.firebasechattingapp2.UserActivityPackage;
+package com.anubhav.firebasechattingapp2;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

@@ -18,13 +18,13 @@ public class ChatMessage {
     private int contentType;
     private String thumbnailURL;
 
-    public ChatMessage (String messageText, String messageSender, String messageReciever, StatusOfMessage statusOfMessage, int contentType, String thumbnailURL) {
+    public ChatMessage (String messageText, String messageSender, String messageReciever, long messageTime, StatusOfMessage statusOfMessage, int contentType, String thumbnailURL) {
         this.messageText = messageText;
         this.messageSender = messageSender;
         this.messageReciever = messageReciever;
         this.statusOfMessage = statusOfMessage;
         this.contentType=contentType;
-        messageTime = new Date().getTime();
+        this.messageTime = messageTime;
         this.thumbnailURL = thumbnailURL;
     }
 

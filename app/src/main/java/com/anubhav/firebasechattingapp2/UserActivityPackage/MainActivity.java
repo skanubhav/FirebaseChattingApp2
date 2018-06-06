@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,28 +14,23 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.Toast;
 
-import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
+import com.anubhav.firebasechattingapp2.UserDBHelper;
 import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -202,28 +198,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeCloudData() {
-        userDatabase.addValueEventListener(new ValueEventListener() {
+        userDatabase.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 SQLiteDatabase database = userDBHelper.getWritableDatabase();
-                for(DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    String Uid = postSnapshot.getValue(User.class).getUid();
-                    String Uname =  postSnapshot.getValue(User.class).getUser();
-                    if(!Uid.equals(user.getUid())) {
-                        if(!CheckIsInDBorNot(Uid)) {
-                            ContentValues values = new ContentValues();
-                            values.put(MessagingContract.UserDatabase.COLUMN_ID, Uid);
-                            values.put(MessagingContract.UserDatabase.COLUMN_NAME, Uname);
-                            database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
-                            UserList.add(new User(Uname, Uid));
-                            displayUsers();
-                        }
+                String Uid = dataSnapshot.getValue(User.class).getUid();
+                String Uname = dataSnapshot.getValue(User.class).getUser();
+                if(!Uid.equals(user.getUid())) {
+                    if(!CheckIsInDBorNot(Uid)) {
+                        ContentValues values = new ContentValues();
+                        values.put(MessagingContract.UserDatabase.COLUMN_ID, Uid);
+                        values.put(MessagingContract.UserDatabase.COLUMN_NAME, Uname);
+                        database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
+                        UserList.add(new User(Uname, Uid));
+                        displayUsers();
                     }
+                    Log.d("UserValueEvent",Uid + " " + Uname);
                 }
             }
 
             @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
     }
