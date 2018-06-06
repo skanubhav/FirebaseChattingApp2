@@ -1,37 +1,26 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.RelativeLayout;
-import android.widget.VideoView;
 
-import com.anubhav.firebasechattingapp2.ChatViewHolders.AudioViewHolder;
-import com.anubhav.firebasechattingapp2.ChatViewHolders.DocumentViewHolder;
-import com.anubhav.firebasechattingapp2.ChatViewHolders.ImageViewHolder;
-import com.anubhav.firebasechattingapp2.ChatViewHolders.TextViewHolder;
-import com.anubhav.firebasechattingapp2.ChatViewHolders.VideoViewHolder;
-import com.bumptech.glide.Glide;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.AudioViewHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.DocumentViewHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.ImageViewHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.TextViewHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.VideoViewHolder;
+import com.anubhav.firebasechattingapp2.GlideApp;
+import com.anubhav.firebasechattingapp2.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -49,7 +38,6 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, ChatHolder> {
 

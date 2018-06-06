@@ -1,4 +1,4 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -8,6 +8,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.MediaController;
 import android.widget.VideoView;
+
+import com.anubhav.firebasechattingapp2.R;
 
 public class VideoPlayerActivity extends AppCompatActivity {
 

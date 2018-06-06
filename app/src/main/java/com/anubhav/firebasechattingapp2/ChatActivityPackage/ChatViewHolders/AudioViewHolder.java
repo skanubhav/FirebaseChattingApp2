@@ -1,11 +1,8 @@
-package com.anubhav.firebasechattingapp2.ChatViewHolders;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders;
 
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.MediaController;
-import android.widget.TextView;
 
-import com.anubhav.firebasechattingapp2.ChatHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatHolder;
 import com.anubhav.firebasechattingapp2.R;
 import com.google.android.exoplayer2.ui.PlayerView;
 

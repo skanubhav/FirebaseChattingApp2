@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/MyChatAppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".UserActivityPackage.MainActivity"
             android:theme="@style/MyChatAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,20 +27,20 @@
         </activity>
 
         <activity
-            android:name=".ChatActivity"
+            android:name=".ChatActivityPackage.ChatActivity"
             android:theme="@style/MyChatAppTheme">
         </activity>
 
         <activity
-            android:name=".FullImageActivity">
+            android:name=".ChatActivityPackage.FullImageActivity">
         </activity>
 
         <activity
-            android:name=".VideoPlayerActivity">
+            android:name=".ChatActivityPackage.VideoPlayerActivity">
         </activity>
 
         <activity
-            android:name=".DocumentViewerActivity">
+            android:name=".ChatActivityPackage.DocumentViewerActivity">
         </activity>
 
     </application>

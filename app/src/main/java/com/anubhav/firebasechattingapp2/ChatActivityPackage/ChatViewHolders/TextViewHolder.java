@@ -1,9 +1,9 @@
-package com.anubhav.firebasechattingapp2.ChatViewHolders;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders;
 
 import android.view.View;
 import android.widget.TextView;
 
-import com.anubhav.firebasechattingapp2.ChatHolder;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatHolder;
 import com.anubhav.firebasechattingapp2.R;
 
 public class TextViewHolder extends ChatHolder{

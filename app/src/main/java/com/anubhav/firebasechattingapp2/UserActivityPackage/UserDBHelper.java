@@ -1,8 +1,10 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.UserActivityPackage;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import com.anubhav.firebasechattingapp2.MessagingContract;
 
 public class UserDBHelper extends SQLiteOpenHelper {
 

@@ -1,4 +1,4 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.UserActivityPackage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +15,8 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.Toast;
 
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
+import com.anubhav.firebasechattingapp2.R;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;

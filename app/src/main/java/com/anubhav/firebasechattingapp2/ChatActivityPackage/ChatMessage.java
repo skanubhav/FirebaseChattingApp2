@@ -1,4 +1,4 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import java.util.Date;
 

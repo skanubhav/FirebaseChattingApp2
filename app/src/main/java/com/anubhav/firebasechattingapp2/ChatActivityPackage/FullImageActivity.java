@@ -1,4 +1,4 @@
-package com.anubhav.firebasechattingapp2;
+package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -19,6 +19,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.anubhav.firebasechattingapp2.GlideApp;
+import com.anubhav.firebasechattingapp2.R;
 
 import java.util.Date;
 
