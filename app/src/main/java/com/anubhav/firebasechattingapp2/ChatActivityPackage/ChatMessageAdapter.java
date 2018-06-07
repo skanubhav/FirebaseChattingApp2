@@ -22,8 +22,6 @@ import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.Text
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.VideoViewHolder;
 import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.R;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayerFactory;

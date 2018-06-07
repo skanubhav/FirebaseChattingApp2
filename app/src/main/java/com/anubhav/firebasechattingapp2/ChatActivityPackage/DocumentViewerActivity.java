@@ -2,7 +2,6 @@ package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;

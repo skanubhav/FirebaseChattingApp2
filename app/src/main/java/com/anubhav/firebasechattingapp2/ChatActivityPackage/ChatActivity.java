@@ -1,21 +1,20 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.PersistableBundle;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -25,7 +24,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
@@ -33,18 +31,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
 import com.anubhav.firebasechattingapp2.UserActivityPackage.User;
 import com.anubhav.firebasechattingapp2.UserDBHelper;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.google.android.gms.common.data.DataBuffer;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -53,8 +48,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -64,6 +57,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -79,10 +73,12 @@ public class ChatActivity extends AppCompatActivity {
     private FloatingActionButton fab;
     private CardView attachCard;
     private FrameLayout attachFrameLayout;
+    private ProgressBar chat_loading;
 
     // RecyclerView Requirements
     private LinearLayoutManager mLayoutManager;
     private ChatMessageAdapter mAdapter;
+    private List<ChatMessage> ChatList;
 
     // Firebase References
     private DatabaseReference databaseReference;
@@ -90,8 +86,12 @@ public class ChatActivity extends AppCompatActivity {
 
     private String CHAT_TABLE_NAME;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
-    private List<ChatMessage> ChatList;
+
     private ChildEventListener childEventListener;
+
+    private long NumberOfMessages = 20;
+    private long NumberOfTableMessages;
+    private boolean isLoading = false;
 
     // Sender and Receiver Data
     private User Sender;
@@ -119,7 +119,17 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chat_layout);
-        initialize();
+
+        storageReference = FirebaseStorage.getInstance().getReference();
+        ChatList = new ArrayList<>();
+
+        initializeViews();
+        initializeUsers();
+        setListeners();
+        initializeAdapter();
+        initializeLocalData();
+        initializeCloudData();
+        displayChatMessages();
     }
 
     @Override
@@ -229,7 +239,263 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    // Check type of file and upload from uri
+    // CALLED AT START OF ACTIVITY
+    private void initializeViews() {
+        listOfMessages = findViewById(R.id.list_of_messages);
+        mLayoutManager = new LinearLayoutManager(this);
+        fab = findViewById(R.id.fab);
+        message_input = findViewById(R.id.message_input);
+        attachCard = findViewById(R.id.attach_card);
+        attachFrameLayout = findViewById(R.id.attach_activity_layout);
+        chat_loading = findViewById(R.id.chat_loading);
+
+        layoutAnimationController = AnimationUtils.loadLayoutAnimation(listOfMessages.getContext(),R.anim.layout_slide_from_bottom);
+        mLayoutManager.setStackFromEnd(true);
+        listOfMessages.setLayoutManager(mLayoutManager);
+    }
+
+    private void initializeUsers() {
+        Intent intent = getIntent();
+        Sender = new User(intent.getStringExtra("SenderName"),intent.getStringExtra("SenderID"));
+        Reciever = new User(intent.getStringExtra("RecieverName"),intent.getStringExtra("RecieverID"));
+
+        CHAT_TABLE_NAME = Sender.getUid() + Reciever.getUid();
+        SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("
+                + MessagingContract.ChatDatabase._ID + " INTEGER PRIMARY KEY, "
+                + MessagingContract.ChatDatabase.MESSAGE_TEXT + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_SENDER + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_RECIEVER + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_TIME + " INTEGER, "
+                + MessagingContract.ChatDatabase.MESSAGE_STATUS + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE + " INTEGER, "
+                + MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL + " TEXT )";
+
+        databaseReference = FirebaseDatabase.getInstance()
+                .getReference("Chats")
+                .child(Sender.getUid())
+                .child(Reciever.getUid());
+
+        getSupportActionBar().setTitle(Reciever.getUser());
+    }
+
+    private void setListeners() {
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(message_input.getText().toString().equals("")) {
+                    showToast("Input cannot be empty");
+                }
+                else {
+                    sendData(message_input.getText().toString(),ChatMessage.TEXT, null);
+                }
+            }
+        });
+
+        attachCard.findViewById(R.id.attach_image)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchGalleryImage();
+                    }
+                });
+        attachCard.findViewById(R.id.attach_camera)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchCamera();
+                    }
+                });
+        attachCard.findViewById(R.id.attach_video)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchGalleryVideo();
+                    }
+                });
+        attachCard.findViewById(R.id.attach_audio)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchGalleryAudio();
+                    }
+                });
+        attachCard.findViewById(R.id.attach_document)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchAttachDocument();
+                    }
+                });
+
+        attachFrameLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(attachFrameLayout.getVisibility()==View.VISIBLE)
+                    attachFrameLayout.setVisibility(View.GONE);
+            }
+        });
+
+
+    }
+
+    private void initializeAdapter() {
+        mAdapter = new ChatMessageAdapter(ChatList);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void initializeLocalData() {
+        final SQLiteDatabase database = userDBHelper.getReadableDatabase();
+        Cursor Tablecursor = database.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '"
+                + CHAT_TABLE_NAME + "'", null);
+
+        if (Tablecursor.getCount() <= 0) {
+            database.execSQL(SQL_CREATE_CHAT_ENTRIES);
+        }
+
+
+
+                NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
+
+
+                String sortOrder = MessagingContract.ChatDatabase.MESSAGE_TIME + " DESC";
+                String[] projections = {
+                        MessagingContract.ChatDatabase.MESSAGE_TEXT,
+                        MessagingContract.ChatDatabase.MESSAGE_SENDER,
+                        MessagingContract.ChatDatabase.MESSAGE_RECIEVER,
+                        MessagingContract.ChatDatabase.MESSAGE_TIME,
+                        MessagingContract.ChatDatabase.MESSAGE_STATUS,
+                        MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE,
+                        MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL
+                };
+
+                Cursor cursor = database.query(
+                        CHAT_TABLE_NAME,
+                        projections,
+                        null,
+                        null,
+                        null,
+                        null,
+                        sortOrder,
+                        String.valueOf(NumberOfMessages)
+                );
+
+                Collections.reverse(ChatList);
+                while (cursor.moveToNext()) {
+                    boolean flag = true;
+                    String message = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TEXT));
+                    String Sender = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_SENDER));
+                    String Reciever = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_RECIEVER));
+                    long Time = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TIME)));
+                    StatusOfMessage Status = StatusOfMessage.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_STATUS)));
+                    int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
+                    String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
+
+
+                    ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
+                    for (int i = 0; i < ChatList.size(); i++) {
+                        ChatMessage chatMessage = ChatList.get(i);
+                        if(chatMessage.getMessageTime()==newMessage.getMessageTime()){
+                            flag = false;
+                        }
+                    }
+                    if(flag)
+                        ChatList.add(newMessage);
+                }
+                Collections.reverse(ChatList);
+                mAdapter.notifyDataSetChanged();
+    }
+
+
+    private void initializeCloudData() {
+        final SQLiteDatabase database = userDBHelper.getWritableDatabase();
+
+        childEventListener = databaseReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                String message = dataSnapshot.getValue(ChatMessage.class).getMessageText();
+                String Sender = dataSnapshot.getValue(ChatMessage.class).getMessageSender();
+                String Reciever = dataSnapshot.getValue(ChatMessage.class).getMessageReciever();
+                long Time = dataSnapshot.getValue(ChatMessage.class).getMessageTime();
+                StatusOfMessage Status = dataSnapshot.getValue(ChatMessage.class).getStatusOfMessage();
+                int ContentType = dataSnapshot.getValue(ChatMessage.class).getContentType();
+                String Thumbnail = dataSnapshot.getValue(ChatMessage.class).getThumbnailURL();
+
+                if (!CheckIsInDBorNot(Time)) {
+                    ContentValues values = new ContentValues();
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_TEXT, message);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_SENDER, Sender);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_RECIEVER, Reciever);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_TIME, Time);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_STATUS, Status.toString());
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE, ContentType);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL, Thumbnail);
+                    database.insert(CHAT_TABLE_NAME, null, values);
+
+                    ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail));
+                    mAdapter.notifyDataSetChanged();
+                }
+                NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void displayChatMessages() {
+        listOfMessages.setAdapter(mAdapter);
+       // mLayoutManager.smoothScrollToPosition(listOfMessages, null,ChatList.size());
+
+        listOfMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+
+                if (!recyclerView.canScrollVertically(-1)) {
+                    if(!isLoading) {
+                        isLoading = true;
+                        long OldNumber = NumberOfMessages;
+                        Log.d("ScrollOld", String.valueOf(NumberOfMessages));
+                        NumberOfMessages +=20;
+                        if(NumberOfMessages>=NumberOfTableMessages) {
+                            NumberOfMessages = NumberOfTableMessages;
+                        }
+                        Log.d("ScrollNew", String.valueOf(NumberOfMessages));
+                        chat_loading.setVisibility(View.VISIBLE);
+                        initializeLocalData();
+                        chat_loading.setVisibility(View.GONE);
+                        if(NumberOfMessages!= NumberOfTableMessages)
+                            mLayoutManager.scrollToPosition(Integer.parseInt(String.valueOf(NumberOfMessages-OldNumber)));
+                        Log.d("ScrollTo",String.valueOf(NumberOfMessages-OldNumber));
+                    }
+                    isLoading = false;
+                    super.onScrolled(recyclerView, dx, dy);
+                }
+            }
+
+        });
+        listOfMessages.getAdapter().notifyDataSetChanged();
+    }
+
+
+    // SEND VIDEO, AUDIO OR DOCUMENT
     private void uploadFile(Uri data, String typeOfData, final int contentType) throws IOException {
 
         if(typeOfData=="Images") {
@@ -249,29 +515,8 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    public String getFileName(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
-            }
-        }
-        return result;
-    }
 
-    // compress image before sending as byte stream
+    // SEND IMAGE
     private void compressAndSendImage (Uri data) throws IOException {
         byte[] bdata = compressImage(data);
         String fileName = new Date().getTime() + getFileName(data) ;
@@ -281,7 +526,6 @@ public class ChatActivity extends AppCompatActivity {
         showNotification(uploadTask, ChatMessage.IMAGE, null);
     }
 
-    // compress image using bitmap
     private byte[] compressImage (Uri imageUri) throws IOException {
 
         Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),imageUri);
@@ -298,6 +542,7 @@ public class ChatActivity extends AppCompatActivity {
         byte[] bdata = byteArrayOutputStream.toByteArray();
         return bdata;
     }
+
 
     private void showNotification(UploadTask uploadTask,final int contentType, final Uri data) {
         final NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
@@ -354,6 +599,29 @@ public class ChatActivity extends AppCompatActivity {
                 });
     }
 
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+
     private void uploadThumbnail(Uri data, final String videoURL)  {
         MediaMetadataRetriever mMMR = new MediaMetadataRetriever();
         mMMR.setDataSource(this,data);
@@ -386,130 +654,11 @@ public class ChatActivity extends AppCompatActivity {
                     });
     }
 
+
     private void showToast(String text) {
         Toast.makeText(this, text,Toast.LENGTH_LONG).show();
     }
 
-    private void initialize() {
-        storageReference = FirebaseStorage.getInstance().getReference();
-        ChatList = new ArrayList<>();
-        initializeViews();
-        initializeUsers();
-
-        setfabListener();
-        setAttachListeners();
-        initializeAdapter();
-        initializeLocalData();
-        initializeCloudData();
-        displayChatMessages();
-        getSupportActionBar().setTitle(Reciever.getUser());
-    }
-
-    private void initializeLocalData() {
-        SQLiteDatabase database = userDBHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '"
-                + CHAT_TABLE_NAME + "'", null);
-
-        if (cursor.getCount() <= 0) {
-            database.execSQL(SQL_CREATE_CHAT_ENTRIES);
-        }
-
-        String sortOrder = MessagingContract.ChatDatabase.MESSAGE_TIME + " ASC";
-        String[] projections = {
-                MessagingContract.ChatDatabase.MESSAGE_TEXT,
-                MessagingContract.ChatDatabase.MESSAGE_SENDER,
-                MessagingContract.ChatDatabase.MESSAGE_RECIEVER,
-                MessagingContract.ChatDatabase.MESSAGE_TIME,
-                MessagingContract.ChatDatabase.MESSAGE_STATUS,
-                MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE,
-                MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL
-        };
-
-        cursor = database.query(
-                CHAT_TABLE_NAME,
-                projections,
-                null,
-                null,
-                null,
-                null,
-                sortOrder
-        );
-
-        while (cursor.moveToNext()) {
-            boolean flag = true;
-            String message = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TEXT));
-            String Sender = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_SENDER));
-            String Reciever = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_RECIEVER));
-            long Time = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TIME)));
-            StatusOfMessage Status = StatusOfMessage.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_STATUS)));
-            ;
-            int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
-            String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
-
-            ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
-            for (int i = 0; i < ChatList.size(); i++) {
-                ChatMessage chatMessage = ChatList.get(i);
-                if(chatMessage.getMessageTime()==newMessage.getMessageTime()){
-                    flag = false;
-                }
-            }
-            if(flag)
-                ChatList.add(newMessage);
-        }
-        mAdapter.notifyDataSetChanged();
-    }
-
-    private void initializeCloudData() {
-        final SQLiteDatabase database = userDBHelper.getWritableDatabase();
-
-        childEventListener = databaseReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                String message = dataSnapshot.getValue(ChatMessage.class).getMessageText();
-                String Sender = dataSnapshot.getValue(ChatMessage.class).getMessageSender();
-                String Reciever = dataSnapshot.getValue(ChatMessage.class).getMessageReciever();
-                long Time = dataSnapshot.getValue(ChatMessage.class).getMessageTime();
-                StatusOfMessage Status = dataSnapshot.getValue(ChatMessage.class).getStatusOfMessage();
-                int ContentType = dataSnapshot.getValue(ChatMessage.class).getContentType();
-                String Thumbnail = dataSnapshot.getValue(ChatMessage.class).getThumbnailURL();
-
-                if (!CheckIsInDBorNot(Time)) {
-                    ContentValues values = new ContentValues();
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_TEXT, message);
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_SENDER, Sender);
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_RECIEVER, Reciever);
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_TIME, Time);
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_STATUS, Status.toString());
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE, ContentType);
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL, Thumbnail);
-                    database.insert(CHAT_TABLE_NAME, null, values);
-
-                    ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail));
-                    mAdapter.notifyDataSetChanged();
-                }
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-    }
 
     private boolean CheckIsInDBorNot(long Time) {
         String selectQuery = "SELECT  * FROM " + CHAT_TABLE_NAME + " WHERE "
@@ -524,55 +673,7 @@ public class ChatActivity extends AppCompatActivity {
         return true;
     }
 
-    // Set click listeners for attach icons
-    private void setAttachListeners() {
-
-        attachCard.findViewById(R.id.attach_image)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryImage();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_camera)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchCamera();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_video)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryVideo();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_audio)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryAudio();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_document)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchAttachDocument();
-                    }
-                });
-
-        attachFrameLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(attachFrameLayout.getVisibility()==View.VISIBLE)
-                    attachFrameLayout.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    // Select image
+    // CALLED BY ATTACH ICONS
     public void launchGalleryImage() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
@@ -580,7 +681,6 @@ public class ChatActivity extends AppCompatActivity {
         startActivityForResult(intent,RC_TAKE_PICTURE);
     }
 
-    // Capture Image
     private void launchCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
@@ -599,7 +699,6 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    // Select Video
     private void launchGalleryVideo() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("video/*");
@@ -607,7 +706,6 @@ public class ChatActivity extends AppCompatActivity {
         startActivityForResult(intent,RC_TAKE_VIDEO);
     }
 
-    // Select Audio
     private void launchGalleryAudio() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("audio/*");
@@ -615,7 +713,6 @@ public class ChatActivity extends AppCompatActivity {
         startActivityForResult(intent,RC_TAKE_AUDIO);
     }
 
-    // Select Document
     private void launchAttachDocument() {
         String[] mimeTypes =
                 {"application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .doc & .docx
@@ -631,6 +728,7 @@ public class ChatActivity extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(intent,"ChooseFile"),RC_TAKE_DOCUMENT);
     }
 
+
     private File createImageFile() throws IOException {
         String timeStamp = (String) DateFormat.format("yyyydd_HHmmss", new Date().getTime());
         String imageFileName = "IMG_" + timeStamp + "_";
@@ -645,66 +743,6 @@ public class ChatActivity extends AppCompatActivity {
         return image;
     }
 
-    private void initializeViews() {
-        listOfMessages = findViewById(R.id.list_of_messages);
-        mLayoutManager = new LinearLayoutManager(this);
-        fab = findViewById(R.id.fab);
-        message_input = findViewById(R.id.message_input);
-        attachCard = findViewById(R.id.attach_card);
-        attachFrameLayout = findViewById(R.id.attach_activity_layout);
-
-        layoutAnimationController = AnimationUtils.loadLayoutAnimation(listOfMessages.getContext(),R.anim.layout_slide_from_bottom);
-        mLayoutManager.setStackFromEnd(true);
-        listOfMessages.setLayoutAnimation(layoutAnimationController);
-        listOfMessages.setLayoutManager(mLayoutManager);
-
-        //message_input.setInputType(InputType.TYPE_NULL);
-
-    }
-
-    // Set RecyclerView Adapter using firebaseUI
-    private void initializeAdapter() {
-        mAdapter = new ChatMessageAdapter(ChatList);
-        mAdapter.notifyDataSetChanged();
-    }
-
-    // Set Receiver and Sender Data
-    private void initializeUsers() {
-        Intent intent = getIntent();
-        Sender = new User(intent.getStringExtra("SenderName"),intent.getStringExtra("SenderID"));
-        Reciever = new User(intent.getStringExtra("RecieverName"),intent.getStringExtra("RecieverID"));
-
-        CHAT_TABLE_NAME = Sender.getUid() + Reciever.getUid();
-        SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("
-                + MessagingContract.ChatDatabase._ID + " INTEGER PRIMARY KEY, "
-                + MessagingContract.ChatDatabase.MESSAGE_TEXT + " TEXT, "
-                + MessagingContract.ChatDatabase.MESSAGE_SENDER + " TEXT, "
-                + MessagingContract.ChatDatabase.MESSAGE_RECIEVER + " TEXT, "
-                + MessagingContract.ChatDatabase.MESSAGE_TIME + " INTEGER, "
-                + MessagingContract.ChatDatabase.MESSAGE_STATUS + " TEXT, "
-                + MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE + " INTEGER, "
-                + MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL + " TEXT )";
-
-        databaseReference = FirebaseDatabase.getInstance()
-                .getReference("Chats")
-                .child(Sender.getUid())
-                .child(Reciever.getUid());
-    }
-
-    // Set click listener to send message
-    private void setfabListener() {
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(message_input.getText().toString().equals("")) {
-                   showToast("Input cannot be empty");
-                }
-                else {
-                    sendData(message_input.getText().toString(),ChatMessage.TEXT, null);
-                }
-            }
-        });
-    }
 
     // Send Text data
     private void sendData(String data, int contentType, String thumbnailURL) {
@@ -721,14 +759,5 @@ public class ChatActivity extends AppCompatActivity {
                 .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.IN_MESSAGE, contentType, thumbnailURL));
         message_input.setText("");
         mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
-    }
-
-    // Set adapter to recyclerView and listen for changes
-    private void displayChatMessages() {
-        listOfMessages.setAdapter(mAdapter);
-        mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
-
-        listOfMessages.getAdapter().notifyDataSetChanged();
-        listOfMessages.scheduleLayoutAnimation();
     }
 }

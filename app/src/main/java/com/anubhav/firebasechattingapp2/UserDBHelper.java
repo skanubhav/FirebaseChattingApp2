@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.anubhav.firebasechattingapp2.MessagingContract;
-
 public class UserDBHelper extends SQLiteOpenHelper {
 
     private static String SQL_CREATE_USER_ENTRIES =  "CREATE TABLE " + MessagingContract.UserDatabase.TABLE_NAME + " ("

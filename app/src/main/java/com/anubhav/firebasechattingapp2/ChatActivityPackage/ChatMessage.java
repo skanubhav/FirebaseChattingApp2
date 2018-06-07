@@ -1,7 +1,5 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
-import java.util.Date;
-
 public class ChatMessage {
 
     public final static int TEXT = 0;
