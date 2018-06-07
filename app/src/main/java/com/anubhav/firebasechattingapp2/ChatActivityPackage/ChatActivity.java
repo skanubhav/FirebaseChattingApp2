@@ -91,6 +91,7 @@ public class ChatActivity extends AppCompatActivity {
     private String CHAT_TABLE_NAME;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
     private List<ChatMessage> ChatList;
+    private ChildEventListener childEventListener;
 
     // Sender and Receiver Data
     private User Sender;
@@ -196,6 +197,12 @@ public class ChatActivity extends AppCompatActivity {
     protected void onStop() {
        attachFrameLayout.setVisibility(View.GONE);
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        databaseReference.removeEventListener(childEventListener);
+        super.onDestroy();
     }
 
     @Override
@@ -331,9 +338,7 @@ public class ChatActivity extends AppCompatActivity {
                         String status;
                         if(task.isSuccessful()) {
                             thumbnailURL = null;
-                            Log.d("Upload Thumbnail","Check before Upload");
                             if(contentType == ChatMessage.VIDEO){
-                                Log.d("Upload Thumbnail","Start Upload");
                                 uploadThumbnail(data, task.getResult().toString());
                             }
                             else
@@ -353,8 +358,6 @@ public class ChatActivity extends AppCompatActivity {
         MediaMetadataRetriever mMMR = new MediaMetadataRetriever();
         mMMR.setDataSource(this,data);
             Bitmap bitmap = mMMR.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-            Log.d("Upload Thumbnail",bitmap.toString());
-            Log.d("Upload Thumbnail","BeforeUpload");
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
             byte[] bdata = byteArrayOutputStream.toByteArray();
@@ -365,11 +368,9 @@ public class ChatActivity extends AppCompatActivity {
                 @Override
                 public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
                     if(!task.isSuccessful()) {
-                        Log.d("Upload Thumbnail","Uplaoad Failed");
                         throw task.getException();
                     }
                     else {
-                        Log.d("Upload Thumbnail","Upload Success");
                         return thumbnailRef.getDownloadUrl();
                     }
                 }
@@ -378,7 +379,6 @@ public class ChatActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Uri> task) {
                             if(task.isSuccessful()) {
-                                Log.d("Upload Thumbnail","Upload Complete");
                                 thumbnailURL = task.getResult().toString();
                                 sendData(videoURL, ChatMessage.VIDEO, thumbnailURL);
                             }
@@ -446,8 +446,6 @@ public class ChatActivity extends AppCompatActivity {
             int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
             String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
 
-            Log.d("SQlite Select", Sender + Reciever + message);
-
             ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
             for (int i = 0; i < ChatList.size(); i++) {
                 ChatMessage chatMessage = ChatList.get(i);
@@ -458,17 +456,13 @@ public class ChatActivity extends AppCompatActivity {
             if(flag)
                 ChatList.add(newMessage);
         }
-        for(int i = 0; i < ChatList.size();i++)
-            Log.d("ChatListMessages", ChatList.get(i).getMessageText());
-
         mAdapter.notifyDataSetChanged();
-
     }
 
     private void initializeCloudData() {
         final SQLiteDatabase database = userDBHelper.getWritableDatabase();
 
-        databaseReference.addChildEventListener(new ChildEventListener() {
+        childEventListener = databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 String message = dataSnapshot.getValue(ChatMessage.class).getMessageText();
@@ -492,10 +486,7 @@ public class ChatActivity extends AppCompatActivity {
 
                     ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail));
                     mAdapter.notifyDataSetChanged();
-
-                    Log.d("ValueEventList", Sender + "->" + Reciever + " = " + message);
                 }
-                Log.d("ValueEventList2", Sender + "->" + Reciever + " = " + message);
             }
 
             @Override
