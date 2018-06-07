@@ -41,15 +41,23 @@
             android:hint="Input" />
     </android.support.design.widget.TextInputLayout>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/input_layout"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="15dp"
+        android:fadingEdge="horizontal">
+
         <android.support.v7.widget.RecyclerView
             android:id="@+id/list_of_messages"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@id/input_layout"
-            android:layout_alignParentTop="true"
-            android:layout_marginBottom="15dp"
             android:fadingEdge="horizontal">
         </android.support.v7.widget.RecyclerView>
+
+    </FrameLayout>
+
 
     <FrameLayout
         android:id="@+id/attach_activity_layout"

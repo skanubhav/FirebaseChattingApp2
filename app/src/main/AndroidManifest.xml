@@ -28,7 +28,9 @@
 
         <activity
             android:name=".ChatActivityPackage.ChatActivity"
-            android:theme="@style/MyChatAppTheme">
+            android:theme="@style/MyChatAppTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize">
+
         </activity>
 
         <activity

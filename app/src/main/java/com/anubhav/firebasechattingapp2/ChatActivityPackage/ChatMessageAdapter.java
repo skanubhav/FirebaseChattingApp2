@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
+import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,11 +39,15 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.IOException;
+import java.util.List;
 
-public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, ChatHolder> {
+public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
 
-    public ChatMessageAdapter(FirebaseRecyclerOptions<ChatMessage> options) {
-        super(options);
+
+    private List<ChatMessage> ChatList;
+
+    public ChatMessageAdapter(List<ChatMessage> ChatList) {
+        this.ChatList = ChatList;
     }
 
     @NonNull
@@ -75,32 +80,32 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
     }
 
     @Override
-    protected void onBindViewHolder(@NonNull ChatHolder holder, int position, @NonNull ChatMessage model) {
+    public void onBindViewHolder(@NonNull ChatHolder holder, int position) {
         holder.message_time.setText(DateFormat.format("dd/MM/yyyy (HH:mm)",
-                model.getMessageTime()));
+                ChatList.get(position).getMessageTime()));
 
-        if (model.getContentType()==ChatMessage.TEXT) {
-            handleTextMessage(((TextViewHolder) holder), model);
+        if (ChatList.get(position).getContentType()==ChatMessage.TEXT) {
+            handleTextMessage(((TextViewHolder) holder), ChatList.get(position));
         }
-        else if(model.getContentType()==ChatMessage.IMAGE) {
-            handleImageMessage(((ImageViewHolder) holder), model);
+        else if(ChatList.get(position).getContentType()==ChatMessage.IMAGE) {
+            handleImageMessage(((ImageViewHolder) holder), ChatList.get(position));
         }
-        else if(model.getContentType()==ChatMessage.VIDEO){
-            handleVideoMessage(((VideoViewHolder) holder), model);
+        else if(ChatList.get(position).getContentType()==ChatMessage.VIDEO){
+            handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position));
         }
-        else if(model.getContentType()==ChatMessage.AUDIO){
-            try {
-                handleAudioMessage(((AudioViewHolder) holder), model);
+        else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
+            /* try {
+                handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
-        else if(model.getContentType()==ChatMessage.DOCUMENT){
-            handleDocumentMessage(((DocumentViewHolder) holder), model);
+        else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
+            handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
         }
 
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) holder.message_layout.getLayoutParams();
-        if(model.getStatusOfMessage().equals(StatusOfMessage.OUT_MESSAGE)) {
+        if(ChatList.get(position).getStatusOfMessage().equals(StatusOfMessage.OUT_MESSAGE)) {
             holder.message_relativelayout.setBackgroundColor(holder.message_layout.getResources().getColor(R.color.messageOutBubble));
             layoutParams.gravity = GravityCompat.END;
         }
@@ -113,7 +118,12 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     public int getItemViewType(int position) {
-        return getItem(position).getContentType();
+        return ChatList.get(position).getContentType();
+    }
+
+    @Override
+    public int getItemCount() {
+        return ChatList.size();
     }
 
     private void handleTextMessage(TextViewHolder holder, ChatMessage model) {
