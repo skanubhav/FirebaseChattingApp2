@@ -10,6 +10,8 @@ public final class MessagingContract {
         public static String TABLE_NAME = "Users";
         public static String COLUMN_NAME = "User_Name";
         public static String COLUMN_ID = "User_ID";
+        public static String COLUMN_LAST_MESSAGE = "LastMessage";
+        public static String COLUMN_LAST_MESSAGE_STAT = "LastMessageStat";
     }
 
     public static class ChatDatabase implements  BaseColumns {

@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView listOfUsers;
     private ActionBar actionBar;
     private DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
-    public static User user;
+    private User user;
     private List<User> UserList;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
 
@@ -86,6 +86,12 @@ public class MainActivity extends AppCompatActivity {
         database.execSQL("delete from " + MessagingContract.UserDatabase.TABLE_NAME);
         UserList.clear();
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+
+        super.onResume();
     }
 
     @Override
@@ -156,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void displayUsers() {
-        mAdapter = new UserRecyclerAdapter(UserList);
+        mAdapter = new UserRecyclerAdapter(UserList, user, this);
         listOfUsers.setLayoutManager(mLayoutManager);
         listOfUsers.setAdapter(mAdapter);
 
@@ -169,7 +175,9 @@ public class MainActivity extends AppCompatActivity {
         String sortOrder = MessagingContract.UserDatabase.COLUMN_NAME + " ASC";
         String[] projections = {
                 MessagingContract.UserDatabase.COLUMN_ID,
-                MessagingContract.UserDatabase.COLUMN_NAME
+                MessagingContract.UserDatabase.COLUMN_NAME,
+                MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE,
+                MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT
         };
 
         Cursor cursor = database.query(
@@ -183,12 +191,18 @@ public class MainActivity extends AppCompatActivity {
         );
 
         while(cursor.moveToNext()) {
+            boolean flag = false;
             String name = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_NAME));
             String id = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_ID));
+            String lastMessage = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE));
+            String lastMessageStat =cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT));
             Log.d("SQLiteDatabase", name + " " + id);
-            User newUser = new User (name, id);
-            if(!UserList.contains(newUser))
-                UserList.add(newUser);
+            User newUser = new User (name, id, lastMessage, lastMessageStat);
+           for(int i = 0; i< UserList.size(); i++) {
+               flag = UserList.get(i).getUid().equals(newUser.getUid());
+           }
+           if(!flag)
+               UserList.add(newUser);
         }
         displayUsers();
     }
@@ -205,8 +219,10 @@ public class MainActivity extends AppCompatActivity {
                         ContentValues values = new ContentValues();
                         values.put(MessagingContract.UserDatabase.COLUMN_ID, Uid);
                         values.put(MessagingContract.UserDatabase.COLUMN_NAME, Uname);
+                        values.put(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE,"");
+                        values.put(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT,"");
                         database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
-                        UserList.add(new User(Uname, Uid));
+                        UserList.add(new User(Uname, Uid, "", ""));
                         displayUsers();
                     }
                     Log.d("UserValueEvent",Uid + " " + Uname);
@@ -236,6 +252,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeUser() {
-        user = new User(FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),FirebaseAuth.getInstance().getCurrentUser().getUid());
+        user = new User(FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),FirebaseAuth.getInstance().getCurrentUser().getUid(), "","");
     }
 }

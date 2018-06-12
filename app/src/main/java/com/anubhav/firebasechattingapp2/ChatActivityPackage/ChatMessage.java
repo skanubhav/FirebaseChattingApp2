@@ -31,27 +31,21 @@ public class ChatMessage {
     public String getMessageText() {
         return messageText;
     }
-
     public String getMessageReciever() {
         return messageReciever;
     }
-
     public String getMessageSender() {
         return messageSender;
     }
-
     public int getContentType() {
         return contentType;
     }
-
     public long getMessageTime() {
         return messageTime;
     }
-
     public StatusOfMessage getStatusOfMessage() {
         return statusOfMessage;
     }
-
     public String getThumbnailURL() {
         return thumbnailURL;
     }
@@ -59,27 +53,21 @@ public class ChatMessage {
     public void setMessageText(String messageText) {
         this.messageText=messageText;
     }
-
     public void setMessageTime(long messageTime) {
         this.messageTime=messageTime;
     }
-
     public void setContentType(int contentType) {
         this.contentType = contentType;
     }
-
     public void setMessageReciever(String messageReciever) {
         this.messageReciever = messageReciever;
     }
-
     public void setMessageSender(String messageSender) {
         this.messageSender = messageSender;
     }
-
     public void setStatusOfMessage(StatusOfMessage statusOfMessage) {
         this.statusOfMessage = statusOfMessage;
     }
-
     public void setThumbnailURL(String thumbnailURL) {
         this.thumbnailURL = thumbnailURL;
     }

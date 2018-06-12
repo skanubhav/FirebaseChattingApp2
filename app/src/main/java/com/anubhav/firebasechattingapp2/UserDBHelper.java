@@ -6,10 +6,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class UserDBHelper extends SQLiteOpenHelper {
 
-    private static String SQL_CREATE_USER_ENTRIES =  "CREATE TABLE " + MessagingContract.UserDatabase.TABLE_NAME + " ("
+    public static String SQL_CREATE_USER_ENTRIES =  "CREATE TABLE " + MessagingContract.UserDatabase.TABLE_NAME + " ("
             + MessagingContract.UserDatabase._ID + " INTEGER PRIMARY KEY, "
             + MessagingContract.UserDatabase.COLUMN_ID + " TEXT, "
-            + MessagingContract.UserDatabase.COLUMN_NAME + " TEXT )";
+            + MessagingContract.UserDatabase.COLUMN_NAME + " TEXT, "
+            + MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE + " TEXT, "
+            + MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT + " TEXT )";
 
     private static final String SQL_DELETE_USER_ENTRIES = "DROP TABLE IF EXISTS " + MessagingContract.UserDatabase.TABLE_NAME;
 
