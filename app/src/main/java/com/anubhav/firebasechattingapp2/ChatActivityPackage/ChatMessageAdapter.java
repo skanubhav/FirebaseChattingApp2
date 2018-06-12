@@ -1,6 +1,8 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -124,8 +126,23 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         return ChatList.size();
     }
 
-    private void handleTextMessage(TextViewHolder holder, ChatMessage model) {
+    private void handleTextMessage(final TextViewHolder holder, ChatMessage model) {
         holder.message_text.setText(model.getMessageText());
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                CharSequence[] item = {"Copy"};
+                AlertDialog.Builder builder = new AlertDialog.Builder(holder.message_text.getContext());
+                builder.setTitle("Select Action");
+                builder.setItems(item, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                return true;
+            }
+        });
     }
 
     private void handleImageMessage(ImageViewHolder holder, ChatMessage model) {

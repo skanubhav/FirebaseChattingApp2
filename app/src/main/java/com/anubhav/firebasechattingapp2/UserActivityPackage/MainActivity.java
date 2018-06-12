@@ -140,10 +140,6 @@ public class MainActivity extends AppCompatActivity {
         listOfUsers = findViewById(R.id.list_of_users);
         mLayoutManager = new LinearLayoutManager(this);
         UserList = new ArrayList<>();
-
-        LayoutAnimationController layoutAnimationController =
-                AnimationUtils.loadLayoutAnimation(listOfUsers.getContext(),R.anim.layout_fall_from_top);
-        listOfUsers.setLayoutAnimation(layoutAnimationController);
     }
 
     private boolean CheckIsInDBorNot(String Uid) {

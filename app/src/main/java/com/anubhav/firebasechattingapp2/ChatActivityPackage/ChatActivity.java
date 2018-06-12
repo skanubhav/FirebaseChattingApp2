@@ -1,5 +1,6 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
+import android.animation.Animator;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -29,6 +30,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.EditText;
@@ -141,12 +143,76 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId()==R.id.attach_file) {
-            if(attachFrameLayout.getVisibility()==View.GONE){
-                attachFrameLayout.setVisibility(View.VISIBLE);
+
+            if(attachFrameLayout.getVisibility()==View.INVISIBLE || attachFrameLayout.getVisibility()==View.GONE ){
+                int cx = attachCard.getWidth()/2;
+                int cy = attachCard.getHeight()/2;
+                float radius = (float) Math.hypot(cx, cy);
+                Animator animator = ViewAnimationUtils.createCircularReveal(
+                        attachCard,
+                        cx,
+                        cy,
+                        0,
+                        radius
+                );
+                animator.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        attachFrameLayout.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+                animator.start();
             }
 
             else if (attachFrameLayout.getVisibility()==View.VISIBLE){
-                attachFrameLayout.setVisibility(View.GONE);
+                int cx = attachCard.getWidth()/2;
+                int cy = attachCard.getHeight()/2;
+                float radius = (float) Math.hypot(cx, cy);
+                Animator animator = ViewAnimationUtils.createCircularReveal(
+                        attachCard,
+                        cx,
+                        cy,
+                        radius,
+                        0
+                );
+                animator.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        attachFrameLayout.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+
+                animator.start();
             }
         }
         return super.onOptionsItemSelected(item);
@@ -275,6 +341,9 @@ public class ChatActivity extends AppCompatActivity {
                 .child(Sender.getUid())
                 .child(Reciever.getUid());
 
+        /* SQLiteDatabase database = userDBHelper.getWritableDatabase();
+        database.execSQL("delete from " + CHAT_TABLE_NAME); */
+
         getSupportActionBar().setTitle(Reciever.getUser());
     }
 
@@ -331,8 +400,41 @@ public class ChatActivity extends AppCompatActivity {
         attachFrameLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(attachFrameLayout.getVisibility()==View.VISIBLE)
-                    attachFrameLayout.setVisibility(View.GONE);
+                if(attachFrameLayout.getVisibility()==View.VISIBLE){
+                    int cx = attachCard.getWidth()/2;
+                    int cy = attachCard.getHeight()/2;
+                    float radius = (float) Math.hypot(cx, cy);
+                    Animator animator = ViewAnimationUtils.createCircularReveal(
+                            attachCard,
+                            cx,
+                            cy,
+                            radius,
+                            0
+                    );
+                    animator.addListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            attachFrameLayout.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+
+                    animator.start();
+                }
             }
         });
 
@@ -341,7 +443,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeAdapter() {
         mAdapter = new ChatMessageAdapter(ChatList);
-        mAdapter.notifyDataSetChanged();
+       // mAdapter.notifyDataSetChanged();
+        mAdapter.notifyItemInserted(ChatList.size());
     }
 
     private void initializeLocalData() {
@@ -352,60 +455,53 @@ public class ChatActivity extends AppCompatActivity {
         if (Tablecursor.getCount() <= 0) {
             database.execSQL(SQL_CREATE_CHAT_ENTRIES);
         }
+        NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
 
+        String sortOrder = MessagingContract.ChatDatabase.MESSAGE_TIME + " DESC";
+        String[] projections = {
+                MessagingContract.ChatDatabase.MESSAGE_TEXT,
+                MessagingContract.ChatDatabase.MESSAGE_SENDER,
+                MessagingContract.ChatDatabase.MESSAGE_RECIEVER,
+                MessagingContract.ChatDatabase.MESSAGE_TIME,
+                MessagingContract.ChatDatabase.MESSAGE_STATUS,
+                MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE,
+                MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL
+        };
 
+        Cursor cursor = database.query(
+                CHAT_TABLE_NAME,
+                projections,
+                null,
+                null,
+                null,
+                null,
+                sortOrder,
+                String.valueOf(NumberOfMessages)
+        );
 
-                NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
+        while (cursor.moveToNext()) {
+            String message = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TEXT));
+            String Sender = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_SENDER));
+            String Reciever = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_RECIEVER));
+            long Time = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TIME)));
+            StatusOfMessage Status = StatusOfMessage.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_STATUS)));
+            int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
+            String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
 
-
-                String sortOrder = MessagingContract.ChatDatabase.MESSAGE_TIME + " DESC";
-                String[] projections = {
-                        MessagingContract.ChatDatabase.MESSAGE_TEXT,
-                        MessagingContract.ChatDatabase.MESSAGE_SENDER,
-                        MessagingContract.ChatDatabase.MESSAGE_RECIEVER,
-                        MessagingContract.ChatDatabase.MESSAGE_TIME,
-                        MessagingContract.ChatDatabase.MESSAGE_STATUS,
-                        MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE,
-                        MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL
-                };
-
-                Cursor cursor = database.query(
-                        CHAT_TABLE_NAME,
-                        projections,
-                        null,
-                        null,
-                        null,
-                        null,
-                        sortOrder,
-                        String.valueOf(NumberOfMessages)
-                );
-
-                Collections.reverse(ChatList);
-                while (cursor.moveToNext()) {
-                    boolean flag = true;
-                    String message = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TEXT));
-                    String Sender = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_SENDER));
-                    String Reciever = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_RECIEVER));
-                    long Time = Long.parseLong(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TIME)));
-                    StatusOfMessage Status = StatusOfMessage.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_STATUS)));
-                    int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
-                    String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
-
-
-                    ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
-                    for (int i = 0; i < ChatList.size(); i++) {
-                        ChatMessage chatMessage = ChatList.get(i);
-                        if(chatMessage.getMessageTime()==newMessage.getMessageTime()){
-                            flag = false;
-                        }
-                    }
-                    if(flag)
-                        ChatList.add(newMessage);
+            ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
+            if(ChatList.size()==0) {
+                ChatList.add(0,newMessage);
+            }
+            else if(ChatList.size()>0) {
+                if(ChatList.get(0).getMessageTime() > newMessage.getMessageTime()){
+                    ChatList.add(0,newMessage);
+                    mAdapter.notifyItemInserted(0);
                 }
-                Collections.reverse(ChatList);
-                mAdapter.notifyDataSetChanged();
-    }
+            }
+        }
 
+
+    }
 
     private void initializeCloudData() {
         final SQLiteDatabase database = userDBHelper.getWritableDatabase();
@@ -433,7 +529,9 @@ public class ChatActivity extends AppCompatActivity {
                     database.insert(CHAT_TABLE_NAME, null, values);
 
                     ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail));
-                    mAdapter.notifyDataSetChanged();
+                    NumberOfMessages++;
+                    // mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyItemInserted(ChatList.size());
                 }
                 NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
             }
@@ -471,18 +569,26 @@ public class ChatActivity extends AppCompatActivity {
                 if (!recyclerView.canScrollVertically(-1)) {
                     if(!isLoading) {
                         isLoading = true;
-                        long OldNumber = NumberOfMessages;
+                        final long OldNumber = NumberOfMessages;
                         Log.d("ScrollOld", String.valueOf(NumberOfMessages));
                         NumberOfMessages +=20;
                         if(NumberOfMessages>=NumberOfTableMessages) {
                             NumberOfMessages = NumberOfTableMessages;
                         }
                         Log.d("ScrollNew", String.valueOf(NumberOfMessages));
-                        chat_loading.setVisibility(View.VISIBLE);
-                        initializeLocalData();
-                        chat_loading.setVisibility(View.GONE);
-                        if(NumberOfMessages!= NumberOfTableMessages)
-                            mLayoutManager.scrollToPosition(Integer.parseInt(String.valueOf(NumberOfMessages-OldNumber)));
+                        if(OldNumber < NumberOfTableMessages)
+                            chat_loading.setVisibility(View.VISIBLE);
+                        new Handler().postDelayed(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        initializeLocalData();
+                                        chat_loading.setVisibility(View.GONE);
+                                        if(OldNumber!= NumberOfTableMessages)
+                                            mLayoutManager.scrollToPosition(Integer.parseInt(String.valueOf(NumberOfMessages-OldNumber-1)));
+                                    }
+                                }
+                        , 1500);
                         Log.d("ScrollTo",String.valueOf(NumberOfMessages-OldNumber));
                     }
                     isLoading = false;
