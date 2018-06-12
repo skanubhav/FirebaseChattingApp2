@@ -48,6 +48,10 @@
             android:name=".ChatActivityPackage.DocumentViewerActivity">
         </activity>
 
+        <activity android:name=".UserActivityPackage.ProfilePageActivity">
+
+        </activity>
+
     </application>
 
 </manifest>

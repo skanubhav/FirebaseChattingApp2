@@ -79,12 +79,18 @@ public class MainActivity extends AppCompatActivity {
                                             .createSignInIntentBuilder()
                                             .build(),
                                     SIGN_IN_REQUEST_CODE);
+                            SQLiteDatabase database = userDBHelper.getWritableDatabase();
+                            database.execSQL("delete from " + MessagingContract.UserDatabase.TABLE_NAME);
+                            UserList.clear();
                         }
                     });
+
         }
-        SQLiteDatabase database = userDBHelper.getWritableDatabase();
-        database.execSQL("delete from " + MessagingContract.UserDatabase.TABLE_NAME);
-        UserList.clear();
+        else if(item.getItemId()==R.id.profile_page) {
+            Intent intent =new Intent(MainActivity.this, ProfilePageActivity.class);
+            startActivity(intent);
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
