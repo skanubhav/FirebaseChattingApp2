@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatMessage;
+import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
 import com.anubhav.firebasechattingapp2.UserDBHelper;
@@ -86,6 +87,12 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
         else if(UserList.get(position).getLastMessageStat().equals("IN_MESSAGE")) {
             holder.message_stat.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_incoming_message));
         }
+
+        if(UserList.get(position).getProfilePictureURL()!=null)
+            GlideApp.with(context)
+                    .load(UserList.get(position).getProfilePictureURL())
+                    .dontAnimate()
+                    .into(holder.user_image);
     }
 
     private void setFirebaseDatabaseListener(final int position, final User Reciever, final Context context) {
@@ -99,7 +106,18 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
         lastQuery.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                String lastMessage = dataSnapshot.getValue(ChatMessage.class).getMessageText();
+                String lastMessage = null;
+                if(dataSnapshot.getValue(ChatMessage.class).getContentType() == ChatMessage.TEXT)
+                    lastMessage = dataSnapshot.getValue(ChatMessage.class).getMessageText();
+                else if(dataSnapshot.getValue(ChatMessage.class).getContentType() == ChatMessage.IMAGE)
+                    lastMessage = "Image";
+                else if(dataSnapshot.getValue(ChatMessage.class).getContentType() == ChatMessage.VIDEO)
+                    lastMessage = "Video";
+                else if(dataSnapshot.getValue(ChatMessage.class).getContentType() == ChatMessage.AUDIO)
+                    lastMessage = "Audio";
+                else if(dataSnapshot.getValue(ChatMessage.class).getContentType() == ChatMessage.DOCUMENT)
+                    lastMessage = "Document";
+
                 String lastMessageStat = String.valueOf(dataSnapshot.getValue(ChatMessage.class).getStatusOfMessage());
                 if(!lastMessage.equals(Reciever.getLastMessage())) {
                     UserList.get(position).setLastMessage(lastMessage);

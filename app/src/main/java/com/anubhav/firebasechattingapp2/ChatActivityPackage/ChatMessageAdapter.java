@@ -26,11 +26,17 @@ import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.R;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -94,11 +100,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
             handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position));
         }
         else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
-            /* try {
+           /* try {
                 handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
+            } */
         }
         else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
             handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
@@ -174,6 +180,57 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 new DefaultLoadControl());
 
         holder.audio_play.setPlayer(player);
+        player.addListener(new Player.EventListener() {
+            @Override
+            public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
+
+            }
+
+            @Override
+            public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+            }
+
+            @Override
+            public void onLoadingChanged(boolean isLoading) {
+
+            }
+
+            @Override
+            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+
+            }
+
+            @Override
+            public void onRepeatModeChanged(int repeatMode) {
+
+            }
+
+            @Override
+            public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+            }
+
+            @Override
+            public void onPlayerError(ExoPlaybackException error) {
+
+            }
+
+            @Override
+            public void onPositionDiscontinuity(int reason) {
+
+            }
+
+            @Override
+            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+            }
+
+            @Override
+            public void onSeekProcessed() {
+
+            }
+        });
         player.setPlayWhenReady(plaWhenReady);
         player.seekTo(currentWindow, playbackPostion);
         player.prepare(mediaSource, true, false);

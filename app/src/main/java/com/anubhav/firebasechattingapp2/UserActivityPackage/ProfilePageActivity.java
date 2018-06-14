@@ -190,7 +190,7 @@ public class ProfilePageActivity extends AppCompatActivity {
                 FirebaseAuth.getInstance().getCurrentUser().getUid(),
                 "",
                 "",
-                FirebaseAuth.getInstance().getCurrentUser().getPhotoUrl().toString()
+                FirebaseAuth.getInstance().getCurrentUser().getPhotoUrl()==null? null: FirebaseAuth.getInstance().getCurrentUser().getPhotoUrl().toString()
         );
 
         userNameView.setEnabled(false);
@@ -199,8 +199,9 @@ public class ProfilePageActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        Uri profileImageURL = Uri.parse(user.getProfilePictureURL());
-        if(profileImageURL!=null) {
+
+        if(user.getProfilePictureURL()!=null) {
+            Uri profileImageURL = Uri.parse(user.getProfilePictureURL());
             GlideApp.with(this)
                     .load(profileImageURL)
                     .dontAnimate()
@@ -234,10 +235,12 @@ public class ProfilePageActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 showToast("Display Name Changed");
+                                setDisabled();
                             }
                         });
                         user.setUser(userNameView.getText().toString());
                         FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
+
                     }
                     if(!userEmail.equals(userEmailView.getText().toString()) && !userPasswordView.getText().toString().equals("password")) {
                         reuthenticateAndChange("EMAILANDPASSWORD");
@@ -252,15 +255,17 @@ public class ProfilePageActivity extends AppCompatActivity {
                             reuthenticateAndChange("PASSWORD");
                         }
                     }
-
-                    userNameView.setEnabled(false);
-                    userEmailView.setEnabled(false);
-                    userPasswordView.setEnabled(false);
-                    editButton.setText("EDIT");
-                    MODE = SHOW_MODE;
                 }
             }
         });
+    }
+
+    private void setDisabled() {
+        userNameView.setEnabled(false);
+        userEmailView.setEnabled(false);
+        userPasswordView.setEnabled(false);
+        editButton.setText("EDIT");
+        MODE = SHOW_MODE;
     }
 
     private void reuthenticateAndChange(final String changeParameter) {
@@ -283,8 +288,12 @@ public class ProfilePageActivity extends AppCompatActivity {
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-                                            if(task.isSuccessful())
+                                            if(task.isSuccessful()) {
                                                 showToast("Email Changed");
+                                                setDisabled();
+                                            }
+
+
                                         }
                                     });
                         }
@@ -293,8 +302,11 @@ public class ProfilePageActivity extends AppCompatActivity {
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-                                            if(task.isSuccessful())
+                                            if(task.isSuccessful()) {
                                                 showToast("Password Changed");
+                                                setDisabled();
+                                            }
+
                                         }
                                     });
                         }
@@ -311,8 +323,10 @@ public class ProfilePageActivity extends AppCompatActivity {
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-                                            if(task.isSuccessful())
+                                            if(task.isSuccessful()) {
                                                 showToast("Password Changed");
+                                                setDisabled();
+                                            }
                                         }
                                     });
                         }

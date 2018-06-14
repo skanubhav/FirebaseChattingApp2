@@ -31,7 +31,7 @@ public class User {
     public String getLastMessageStat() {
         return lastMessageStat;
     }
-   public String getProfilePictureURL() {
+    public String getProfilePictureURL() {
         return profilePictureURL;
     }
 
