@@ -7,12 +7,14 @@ public class User {
     private String uid;
     private String lastMessage;
     private String lastMessageStat;
+    private String profilePictureURL;
 
-    public User(String user, String uid, String lastMessage, String lastMessageStat) {
+    public User(String user, String uid, String lastMessage, String lastMessageStat, String profilePictureURL) {
         this.user = user;
         this.uid = uid;
         this.lastMessage = lastMessage;
         this.lastMessageStat = lastMessageStat;
+        this.profilePictureURL = profilePictureURL;
     }
 
     public User() {}
@@ -29,6 +31,9 @@ public class User {
     public String getLastMessageStat() {
         return lastMessageStat;
     }
+   public String getProfilePictureURL() {
+        return profilePictureURL;
+    }
 
     public void setUser(String user) {
         this.user = user;
@@ -41,5 +46,8 @@ public class User {
     }
     public void setLastMessageStat(String lastMessageStat) {
         this.lastMessageStat = lastMessageStat;
+    }
+    public void setProfilePictureURL(String profilePictureURL) {
+        this.profilePictureURL = profilePictureURL;
     }
 }

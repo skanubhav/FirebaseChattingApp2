@@ -322,8 +322,16 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeUsers() {
         Intent intent = getIntent();
-        Sender = new User(intent.getStringExtra("SenderName"),intent.getStringExtra("SenderID"), null, null);
-        Reciever = new User(intent.getStringExtra("RecieverName"),intent.getStringExtra("RecieverID"), null, null);
+        Sender = new User(intent.getStringExtra("SenderName"),
+                intent.getStringExtra("SenderID"),
+                null,
+                null,
+                intent.getStringExtra("SenderPhoto"));
+        Reciever = new User(intent.getStringExtra("RecieverName"),
+                intent.getStringExtra("RecieverID"),
+                null,
+                null,
+                intent.getStringExtra("RecieverPhoto"));
 
         CHAT_TABLE_NAME = Sender.getUid() + Reciever.getUid();
         SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("

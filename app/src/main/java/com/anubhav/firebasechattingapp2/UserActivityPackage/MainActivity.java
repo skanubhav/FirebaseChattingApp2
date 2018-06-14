@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -63,6 +64,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        initializeUser();
+        actionBar.setTitle("Welcome " + user.getUser());
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId()==R.id.sign_out)
         {
@@ -95,12 +103,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-
-        super.onResume();
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -124,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 
     private void signIn() {
         FirebaseApp.initializeApp(this);
@@ -183,7 +184,8 @@ public class MainActivity extends AppCompatActivity {
                 MessagingContract.UserDatabase.COLUMN_ID,
                 MessagingContract.UserDatabase.COLUMN_NAME,
                 MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE,
-                MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT
+                MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT,
+                MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE
         };
 
         Cursor cursor = database.query(
@@ -202,8 +204,9 @@ public class MainActivity extends AppCompatActivity {
             String id = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_ID));
             String lastMessage = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE));
             String lastMessageStat =cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT));
+            String profileImage = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE));
             Log.d("SQLiteDatabase", name + " " + id);
-            User newUser = new User (name, id, lastMessage, lastMessageStat);
+            User newUser = new User (name, id, lastMessage, lastMessageStat, profileImage);
            for(int i = 0; i< UserList.size(); i++) {
                flag = UserList.get(i).getUid().equals(newUser.getUid());
            }
@@ -220,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
                 SQLiteDatabase database = userDBHelper.getWritableDatabase();
                 String Uid = dataSnapshot.getValue(User.class).getUid();
                 String Uname = dataSnapshot.getValue(User.class).getUser();
+                String Uimage = dataSnapshot.getValue(User.class).getProfilePictureURL();
                 if(!Uid.equals(user.getUid())) {
                     if(!CheckIsInDBorNot(Uid)) {
                         ContentValues values = new ContentValues();
@@ -227,8 +231,9 @@ public class MainActivity extends AppCompatActivity {
                         values.put(MessagingContract.UserDatabase.COLUMN_NAME, Uname);
                         values.put(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE,"");
                         values.put(MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT,"");
+                        values.put(MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE, Uimage);
                         database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
-                        UserList.add(new User(Uname, Uid, "", ""));
+                        UserList.add(new User(Uname, Uid, "", "", Uimage));
                         displayUsers();
                     }
                     Log.d("UserValueEvent",Uid + " " + Uname);
@@ -237,7 +242,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
             }
 
             @Override
@@ -258,6 +262,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeUser() {
-        user = new User(FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),FirebaseAuth.getInstance().getCurrentUser().getUid(), "","");
+        Uri userPhoto = FirebaseAuth.getInstance().getCurrentUser().getPhotoUrl();
+        user = new User(FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),
+                FirebaseAuth.getInstance().getCurrentUser().getUid(),
+                "",
+                "",
+                userPhoto == null? null : userPhoto.toString());
     }
 }

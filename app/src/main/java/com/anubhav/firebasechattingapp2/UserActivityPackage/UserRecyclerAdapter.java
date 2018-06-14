@@ -151,8 +151,10 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
 
                     intent.putExtra("SenderID", Sender.getUid());
                     intent.putExtra("SenderName", Sender.getUser());
+                    intent.putExtra("SenderPhoto", Sender.getProfilePictureURL());
                     intent.putExtra("RecieverID", Reciever.getUid());
                     intent.putExtra("RecieverName", Reciever.getUser());
+                    intent.putExtra("RecieverPhoto", Reciever.getProfilePictureURL());
 
                     holder.user.getContext().startActivity(intent);
                 }

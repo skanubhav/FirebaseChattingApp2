@@ -11,7 +11,8 @@ public class UserDBHelper extends SQLiteOpenHelper {
             + MessagingContract.UserDatabase.COLUMN_ID + " TEXT, "
             + MessagingContract.UserDatabase.COLUMN_NAME + " TEXT, "
             + MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE + " TEXT, "
-            + MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT + " TEXT )";
+            + MessagingContract.UserDatabase.COLUMN_LAST_MESSAGE_STAT + " TEXT, "
+            +  MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE + " TEXT )";
 
     private static final String SQL_DELETE_USER_ENTRIES = "DROP TABLE IF EXISTS " + MessagingContract.UserDatabase.TABLE_NAME;
 

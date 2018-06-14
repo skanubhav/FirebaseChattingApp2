@@ -12,6 +12,7 @@ public final class MessagingContract {
         public static String COLUMN_ID = "User_ID";
         public static String COLUMN_LAST_MESSAGE = "LastMessage";
         public static String COLUMN_LAST_MESSAGE_STAT = "LastMessageStat";
+        public static String COLUMN_PROFILE_IMAGE = "ProfileImageURL";
     }
 
     public static class ChatDatabase implements  BaseColumns {
