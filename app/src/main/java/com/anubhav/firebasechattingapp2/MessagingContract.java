@@ -23,5 +23,7 @@ public final class MessagingContract {
         public static String MESSAGE_STATUS = "StatusOfMessage";
         public static String MESSAGE_CONTENT_TYPE = "ContentType";
         public static String MESSAGE_THUMBNAIL = "ThumbnailURL";
+        public static String MESSAGE_LOCAL_URL = "LocalMediaURL";
+        public static String MESSAGE_LOCAL_THUMBNAIL = "LocalThumbnailURL";
     }
 }

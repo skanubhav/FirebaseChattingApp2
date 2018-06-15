@@ -15,8 +15,12 @@ public class ChatMessage {
     private StatusOfMessage statusOfMessage;
     private int contentType;
     private String thumbnailURL;
+    private String localMediaURL;
+    private String localThumbnailURL;
 
-    public ChatMessage (String messageText, String messageSender, String messageReciever, long messageTime, StatusOfMessage statusOfMessage, int contentType, String thumbnailURL) {
+    public ChatMessage (String messageText, String messageSender, String messageReciever, long messageTime,
+                        StatusOfMessage statusOfMessage, int contentType, String thumbnailURL, String localMediaURL,
+                        String localThumbnailURL) {
         this.messageText = messageText;
         this.messageSender = messageSender;
         this.messageReciever = messageReciever;
@@ -24,6 +28,8 @@ public class ChatMessage {
         this.contentType=contentType;
         this.messageTime = messageTime;
         this.thumbnailURL = thumbnailURL;
+        this.localMediaURL = localMediaURL;
+        this.localThumbnailURL = localThumbnailURL;
     }
 
     public ChatMessage(){}
@@ -49,6 +55,12 @@ public class ChatMessage {
     public String getThumbnailURL() {
         return thumbnailURL;
     }
+    public String getLocalMediaURL() {
+        return localMediaURL;
+    }
+    public String getLocalThumbnailURL() {
+        return localThumbnailURL;
+    }
 
     public void setMessageText(String messageText) {
         this.messageText=messageText;
@@ -70,5 +82,11 @@ public class ChatMessage {
     }
     public void setThumbnailURL(String thumbnailURL) {
         this.thumbnailURL = thumbnailURL;
+    }
+    public void setLocalMediaURL(String localMediaURL) {
+        this.localMediaURL = localMediaURL;
+    }
+    public void setLocalThumbnailURL(String localThumbnailURL) {
+        this.localThumbnailURL = localThumbnailURL;
     }
 }

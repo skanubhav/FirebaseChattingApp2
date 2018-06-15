@@ -17,7 +17,8 @@
             android:id="@+id/message_relativelayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:elevation="30dp">
+            android:elevation="30dp"
+            android:layout_gravity="center">
 
             <TextView
                 android:id="@+id/message_time"
@@ -36,6 +37,25 @@
                 android:id="@+id/audio_play">
 
             </com.google.android.exoplayer2.ui.PlayerView>
+
+            <ProgressBar
+                android:id="@+id/download_progress"
+                style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="20dp"
+                android:elevation="8dp"
+                android:indeterminate="true"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/download_button"
+                android:src="@drawable/ic_download_file_dark"
+                android:layout_centerInParent="true"
+                android:visibility="gone"/>
 
         </RelativeLayout>
 

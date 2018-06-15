@@ -90,91 +90,6 @@ public class ProfilePageActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void uploadImage(Uri data) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),data);
-        String fileName = new Date().getTime() + getFileName(data) ;
-        UploadRef = FirebaseStorage.getInstance().getReference().child("ProfileImages/" + user.getUid()+ "/" + fileName);
-
-        bitmap.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
-        byte[] bdata = byteArrayOutputStream.toByteArray();
-
-        UploadTask uploadTask = UploadRef.putBytes(bdata);
-
-        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-            @Override
-            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                if(!task.isSuccessful()) {
-                    throw task.getException();
-                }
-                else {
-                    return UploadRef.getDownloadUrl();
-                }
-            }
-        })
-                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if(task.isSuccessful()) {
-                            user.setProfilePictureURL(task.getResult().toString());
-                            FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
-                            UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder()
-                                    .setPhotoUri(task.getResult())
-                                    .build();
-                            firebaseUser.updateProfile(profileChangeRequest)
-                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            GlideApp.with(userImage.getContext())
-                                                    .load(firebaseUser.getPhotoUrl())
-                                                    .dontAnimate()
-                                                    .into(userImage);
-                                            uploadProgress.setVisibility(View.GONE);
-                                            showToast("Profile Picture Changed");
-                                        }
-                                    });
-                        }
-                    }
-                });
-    }
-
-    public String getFileName(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
-            }
-        }
-        return result;
-    }
-
-    private void setFabListener() {
-        uploadProfileImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchGallery();
-            }
-        });
-    }
-
-    public void launchGallery() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(intent,RC_TAKE_PICTURE);
-    }
 
     private void initialize() {
         uploadProgress = findViewById(R.id.profile_image_loading);
@@ -336,6 +251,94 @@ public class ProfilePageActivity extends AppCompatActivity {
 
         alertDialog.show();
     }
+
+
+    private void uploadImage(Uri data) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),data);
+        String fileName = new Date().getTime() + getFileName(data) ;
+        UploadRef = FirebaseStorage.getInstance().getReference().child("ProfileImages/" + user.getUid()+ "/" + fileName);
+
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+        byte[] bdata = byteArrayOutputStream.toByteArray();
+
+        UploadTask uploadTask = UploadRef.putBytes(bdata);
+
+        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if(!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                else {
+                    return UploadRef.getDownloadUrl();
+                }
+            }
+        })
+                .addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if(task.isSuccessful()) {
+                            user.setProfilePictureURL(task.getResult().toString());
+                            FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
+                            UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder()
+                                    .setPhotoUri(task.getResult())
+                                    .build();
+                            firebaseUser.updateProfile(profileChangeRequest)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            GlideApp.with(userImage.getContext())
+                                                    .load(firebaseUser.getPhotoUrl())
+                                                    .dontAnimate()
+                                                    .into(userImage);
+                                            uploadProgress.setVisibility(View.GONE);
+                                            showToast("Profile Picture Changed");
+                                        }
+                                    });
+                        }
+                    }
+                });
+    }
+
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private void setFabListener() {
+        uploadProfileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                launchGallery();
+            }
+        });
+    }
+
+    public void launchGallery() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent,RC_TAKE_PICTURE);
+    }
+
 
     private void showToast(String text) {
         Toast.makeText(this, text,Toast.LENGTH_LONG).show();

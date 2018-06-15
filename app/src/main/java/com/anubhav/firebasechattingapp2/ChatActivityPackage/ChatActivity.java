@@ -127,6 +127,10 @@ public class ChatActivity extends AppCompatActivity {
 
         initializeViews();
         initializeUsers();
+
+        /* SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME);
+        sqLiteDatabase.execSQL(SQL_CREATE_CHAT_ENTRIES); */
         setListeners();
         initializeAdapter();
         initializeLocalData();
@@ -277,8 +281,8 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        databaseReference.removeEventListener(childEventListener);
-        userDBHelper.close();
+        // databaseReference.removeEventListener(childEventListener);
+        // userDBHelper.close();
         super.onDestroy();
     }
 
@@ -343,15 +347,17 @@ public class ChatActivity extends AppCompatActivity {
                 + MessagingContract.ChatDatabase.MESSAGE_TIME + " INTEGER, "
                 + MessagingContract.ChatDatabase.MESSAGE_STATUS + " TEXT, "
                 + MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE + " INTEGER, "
-                + MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL + " TEXT )";
+                + MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL + " TEXT, "
+                + MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL + " TEXT )";
 
         databaseReference = FirebaseDatabase.getInstance()
                 .getReference("Chats")
                 .child(Sender.getUid())
                 .child(Reciever.getUid());
 
-        /* SQLiteDatabase database = userDBHelper.getWritableDatabase();
-        database.execSQL("delete from " + CHAT_TABLE_NAME); */
+       /* SQLiteDatabase database = userDBHelper.getWritableDatabase();
+        database.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME); */
 
         getSupportActionBar().setTitle(Reciever.getUser());
     }
@@ -451,7 +457,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
-        mAdapter = new ChatMessageAdapter(ChatList);
+        mAdapter = new ChatMessageAdapter(ChatList, this, CHAT_TABLE_NAME);
        // mAdapter.notifyDataSetChanged();
         mAdapter.notifyItemInserted(ChatList.size());
     }
@@ -474,7 +480,9 @@ public class ChatActivity extends AppCompatActivity {
                 MessagingContract.ChatDatabase.MESSAGE_TIME,
                 MessagingContract.ChatDatabase.MESSAGE_STATUS,
                 MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE,
-                MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL
+                MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL,
+                MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL,
+                MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL
         };
 
         Cursor cursor = database.query(
@@ -496,8 +504,10 @@ public class ChatActivity extends AppCompatActivity {
             StatusOfMessage Status = StatusOfMessage.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_STATUS)));
             int ContentType = Integer.parseInt(cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE)));
             String Thumbnail = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL));
+            String LocalMediaURL = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL));
+            String LocalThumbnailURL = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL));
 
-            ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail);
+            ChatMessage newMessage = new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail, LocalMediaURL, LocalThumbnailURL);
             if(ChatList.size()==0) {
                 ChatList.add(0,newMessage);
             }
@@ -535,9 +545,12 @@ public class ChatActivity extends AppCompatActivity {
                     values.put(MessagingContract.ChatDatabase.MESSAGE_STATUS, Status.toString());
                     values.put(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE, ContentType);
                     values.put(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL, Thumbnail);
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL,"");
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL,"");
                     database.insert(CHAT_TABLE_NAME, null, values);
 
-                    ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType, Thumbnail));
+                    ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType,
+                            Thumbnail, "", ""));
                     NumberOfMessages++;
                     // mAdapter.notifyDataSetChanged();
                     mAdapter.notifyItemInserted(ChatList.size());
@@ -866,12 +879,14 @@ public class ChatActivity extends AppCompatActivity {
                 .child(Sender.getUid())
                 .child(Reciever.getUid())
                 .child(String.valueOf(new Date().getTime()))
-                .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE, contentType, thumbnailURL));
+                .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE,
+                        contentType, thumbnailURL, null, null));
         FirebaseDatabase.getInstance().getReference("Chats")
                 .child(Reciever.getUid())
                 .child(Sender.getUid())
                 .child(String.valueOf(new Date().getTime()))
-                .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.IN_MESSAGE, contentType, thumbnailURL));
+                .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.IN_MESSAGE,
+                        contentType, thumbnailURL, null, null));
         message_input.setText("");
         mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
     }
