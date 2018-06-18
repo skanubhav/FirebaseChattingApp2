@@ -631,8 +631,8 @@ public class ChatActivity extends AppCompatActivity {
         }
         else {
             if(new File(data.getPath()).length()<=26214400) {
-                String fileName = new Date().getTime() + getFileName(data);
-                UploadRef = storageReference.child(typeOfData + "/" + fileName);
+                String fileName = new Date().getTime() + " " +  getFileName(data) ;
+                UploadRef = storageReference.child(typeOfData).child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
                 UploadTask uploadTask = UploadRef.putFile(data);
 
                 showNotification(uploadTask, contentType, data);
@@ -643,12 +643,11 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-
     // SEND IMAGE
     private void compressAndSendImage (Uri data) throws IOException {
         byte[] bdata = compressImage(data);
         String fileName = new Date().getTime() + getFileName(data) ;
-        UploadRef = storageReference.child("Images/" + fileName);
+        UploadRef = storageReference.child("Images").child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
         UploadTask uploadTask = UploadRef.putBytes(bdata);
 
         showNotification(uploadTask, ChatMessage.IMAGE, null);

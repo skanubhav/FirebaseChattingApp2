@@ -7,9 +7,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.view.GravityCompat;
@@ -116,7 +118,6 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         }
         else if(ChatList.get(position).getLocalMediaURL().equals("")) {
             setDownloadListener(holder, ChatList.get(position));
-
         }
         else {
             Log.d("ChatMessageAdapter",ChatList.get(position).getLocalMediaURL());
@@ -134,10 +135,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
             }
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
-                handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
+               handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
             }
         }
-
 
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) holder.message_layout.getLayoutParams();
         if(ChatList.get(position).getStatusOfMessage().equals(StatusOfMessage.OUT_MESSAGE)) {
@@ -221,7 +221,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                                   }
                                 }
                                 else if(model.getContentType()==ChatMessage.DOCUMENT) {
-                                    handleDocumentMessage(((DocumentViewHolder) holder), model);
+                                  handleDocumentMessage(((DocumentViewHolder) holder), model);
                                 }
 
                                 holder.message_download_progress.setVisibility(View.GONE);
@@ -359,27 +359,28 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         });
 
         holder.audio_play.setPlayer(player);
-        player.setPlayWhenReady(true);
+        player.setPlayWhenReady(false);
         player.prepare(audioSource, true, false);
     }
 
     private void handleDocumentMessage(final DocumentViewHolder holder, final ChatMessage model) {
-
+        final Uri uri = Uri.parse(model.getLocalMediaURL());
+        final String fileName = uri.getLastPathSegment();
+        holder.message_document_name.setText(fileName);
         holder.message_document.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Uri uri = Uri.parse(model.getLocalMediaURL());
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                if (model.getLocalMediaURL().contains(".doc") || model.getLocalMediaURL().toString().contains(".docx")) {
+                if (fileName.contains(".doc") || fileName.contains(".docx")) {
                     intent.setDataAndType(uri, "application/msword");
                 }
-                else if(model.getLocalMediaURL().toString().contains(".pdf")) {
+                else if(fileName.contains(".pdf")) {
                     intent.setDataAndType(uri, "application/pdf");
                 }
-                else if(model.getLocalMediaURL().toString().contains(".ppt") || model.getLocalMediaURL().toString().contains(".pptx")) {
+                else if(fileName.contains(".ppt") || fileName.contains(".pptx")) {
                     intent.setDataAndType(uri, "application/vnd.ms-powerpoint");
                 }
-                else if(model.getLocalMediaURL().toString().contains(".xls") || model.getLocalMediaURL().toString().contains(".xlsx")) {
+                else if(fileName.contains(".xls") || fileName.contains(".xlsx")) {
                     intent.setDataAndType(uri, "application/vnd.ms-excel");
                 }
                 context.startActivity(intent);
