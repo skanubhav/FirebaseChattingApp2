@@ -1,7 +1,9 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.animation.Animator;
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -14,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PersistableBundle;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
@@ -58,6 +61,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -67,7 +71,7 @@ public class ChatActivity extends AppCompatActivity {
 
 
     //SQL Create Query
-    private String SQL_CREATE_CHAT_ENTRIES;
+    private static String SQL_CREATE_CHAT_ENTRIES;
 
     // Views
     private RecyclerView listOfMessages;
@@ -90,6 +94,7 @@ public class ChatActivity extends AppCompatActivity {
     private UserDBHelper userDBHelper = new UserDBHelper(this);
 
     private ChildEventListener childEventListener;
+    private SQLiteDatabase database;
 
     private long NumberOfMessages = 20;
     private long NumberOfTableMessages;
@@ -338,7 +343,7 @@ public class ChatActivity extends AppCompatActivity {
                 null,
                 intent.getStringExtra("RecieverPhoto"));
 
-        CHAT_TABLE_NAME = Sender.getUid() + Reciever.getUid();
+        CHAT_TABLE_NAME = Sender.getUser() + Sender.getUid() + Reciever.getUid();
         SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("
                 + MessagingContract.ChatDatabase._ID + " INTEGER PRIMARY KEY, "
                 + MessagingContract.ChatDatabase.MESSAGE_TEXT + " TEXT, "
@@ -371,7 +376,7 @@ public class ChatActivity extends AppCompatActivity {
                     showToast("Input cannot be empty");
                 }
                 else {
-                    sendData(message_input.getText().toString(),ChatMessage.TEXT, null);
+                    sendData(message_input.getText().toString(),ChatMessage.TEXT, null, "");
                 }
             }
         });
@@ -457,13 +462,13 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
+        database  = userDBHelper.getWritableDatabase();
         mAdapter = new ChatMessageAdapter(ChatList, this, CHAT_TABLE_NAME);
        // mAdapter.notifyDataSetChanged();
         mAdapter.notifyItemInserted(ChatList.size());
     }
 
     private void initializeLocalData() {
-        final SQLiteDatabase database = userDBHelper.getReadableDatabase();
         Cursor Tablecursor = database.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '"
                 + CHAT_TABLE_NAME + "'", null);
 
@@ -518,12 +523,9 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         }
-
-
     }
 
     private void initializeCloudData() {
-        final SQLiteDatabase database = userDBHelper.getWritableDatabase();
 
         childEventListener = databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
@@ -589,6 +591,7 @@ public class ChatActivity extends AppCompatActivity {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 
                 if (!recyclerView.canScrollVertically(-1)) {
+                    Log.d("Loading", String.valueOf(isLoading));
                     if(!isLoading) {
                         isLoading = true;
                         final long OldNumber = NumberOfMessages;
@@ -625,7 +628,6 @@ public class ChatActivity extends AppCompatActivity {
 
     // SEND VIDEO, AUDIO OR DOCUMENT
     private void uploadFile(Uri data, String typeOfData, final int contentType) throws IOException {
-
         if(typeOfData=="Images") {
             compressAndSendImage(data);
         }
@@ -635,7 +637,7 @@ public class ChatActivity extends AppCompatActivity {
                 UploadRef = storageReference.child(typeOfData).child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
                 UploadTask uploadTask = UploadRef.putFile(data);
 
-                showNotification(uploadTask, contentType, data);
+                showNotification(uploadTask, contentType, data, this);
             }
             else {
                 showToast("Files larger thar 25 MB cannot be uploaded");
@@ -650,7 +652,7 @@ public class ChatActivity extends AppCompatActivity {
         UploadRef = storageReference.child("Images").child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
         UploadTask uploadTask = UploadRef.putBytes(bdata);
 
-        showNotification(uploadTask, ChatMessage.IMAGE, null);
+        showNotification(uploadTask, ChatMessage.IMAGE, data, this);
     }
 
     private byte[] compressImage (Uri imageUri) throws IOException {
@@ -671,7 +673,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    private void showNotification(UploadTask uploadTask,final int contentType, final Uri data) {
+    private void showNotification(final UploadTask uploadTask, final int contentType, final Uri data, final Context context) {
         final NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
         final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                 .setContentTitle("Uploading File")
@@ -680,6 +682,7 @@ public class ChatActivity extends AppCompatActivity {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setProgress(100,0,false);
         notificationManagerCompat.notify(NOTIFICATION_ID, mBuilder.build());
+        Log.d("Upload Local Uri", data.toString());
 
         uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -709,13 +712,11 @@ public class ChatActivity extends AppCompatActivity {
                         notificationManagerCompat.notify(NOTIFICATION_ID, mBuilder.build());
                         String status;
                         if(task.isSuccessful()) {
-                            thumbnailURL = null;
-                            if(contentType == ChatMessage.VIDEO){
-                                uploadThumbnail(data, task.getResult().toString());
+                            try {
+                                sendData(task.getResult().toString(), contentType, null, getPath(context, data));
+                            } catch (URISyntaxException e) {
+                                e.printStackTrace();
                             }
-                            else
-                                sendData(task.getResult().toString(), contentType, null);
-
                             status = "Upload Succesful";
                         }
                         else {
@@ -724,6 +725,64 @@ public class ChatActivity extends AppCompatActivity {
                         showToast(status);
                     }
                 });
+    }
+
+    public static String getPath(Context context, Uri uri) throws URISyntaxException {
+        String selection = null;
+        String[] selectionArgs = null;
+
+        if (DocumentsContract.isDocumentUri(context.getApplicationContext(), uri)) {
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                return Environment.getExternalStorageDirectory() + "/" + split[1];
+            } else if (isDownloadsDocument(uri)) {
+                final String id = DocumentsContract.getDocumentId(uri);
+                uri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+            } else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                if ("image".equals(type)) {
+                    uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+                selection = "_id=?";
+                selectionArgs = new String[]{ split[1] };
+            }
+        }
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            String[] projection = { MediaStore.Images.Media.DATA };
+            Cursor cursor = null;
+            try {
+                cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                if (cursor.moveToFirst()) {
+                    Log.d("File Path", cursor.getString(column_index));
+                    return cursor.getString(column_index);
+                }
+            } catch (Exception e) {
+            }
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 
     public String getFileName(Uri uri) {
@@ -746,39 +805,6 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
         return result;
-    }
-
-
-    private void uploadThumbnail(Uri data, final String videoURL)  {
-        MediaMetadataRetriever mMMR = new MediaMetadataRetriever();
-        mMMR.setDataSource(this,data);
-            Bitmap bitmap = mMMR.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
-            byte[] bdata = byteArrayOutputStream.toByteArray();
-            final StorageReference thumbnailRef =storageReference.child("Videos").child("Thumbnail").child("thumb"+new Date().getTime());
-            UploadTask uploadTask = thumbnailRef.putBytes(bdata);
-
-            uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                @Override
-                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                    if(!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    else {
-                        return thumbnailRef.getDownloadUrl();
-                    }
-                }
-            })
-                    .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Uri> task) {
-                            if(task.isSuccessful()) {
-                                thumbnailURL = task.getResult().toString();
-                                sendData(videoURL, ChatMessage.VIDEO, thumbnailURL);
-                            }
-                        }
-                    });
     }
 
 
@@ -872,8 +898,26 @@ public class ChatActivity extends AppCompatActivity {
 
 
     // Send Text data
-    private void sendData(String data, int contentType, String thumbnailURL) {
+    private void sendData(String data, int contentType, String thumbnailURL, String localMediaURL) {
         long Time = new Date().getTime();
+
+        ContentValues values = new ContentValues();
+        values.put(MessagingContract.ChatDatabase.MESSAGE_TEXT, data);
+        values.put(MessagingContract.ChatDatabase.MESSAGE_SENDER, Sender.getUser());
+        values.put(MessagingContract.ChatDatabase.MESSAGE_RECIEVER, Reciever.getUser());
+        values.put(MessagingContract.ChatDatabase.MESSAGE_TIME, String.valueOf(Time));
+        values.put(MessagingContract.ChatDatabase.MESSAGE_STATUS, String.valueOf(StatusOfMessage.OUT_MESSAGE));
+        values.put(MessagingContract.ChatDatabase.MESSAGE_CONTENT_TYPE, contentType);
+        values.put(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL, "");
+        values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL, localMediaURL);
+        values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL,"");
+        database.insert(CHAT_TABLE_NAME, null, values);
+
+        ChatList.add(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE,
+                contentType, thumbnailURL, localMediaURL, ""));
+        NumberOfMessages++;
+        mAdapter.notifyItemInserted(ChatList.size());
+
         FirebaseDatabase.getInstance().getReference("Chats")
                 .child(Sender.getUid())
                 .child(Reciever.getUid())

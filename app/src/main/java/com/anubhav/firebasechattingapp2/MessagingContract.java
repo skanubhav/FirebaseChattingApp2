@@ -25,5 +25,6 @@ public final class MessagingContract {
         public static String MESSAGE_THUMBNAIL = "ThumbnailURL";
         public static String MESSAGE_LOCAL_URL = "LocalMediaURL";
         public static String MESSAGE_LOCAL_THUMBNAIL = "LocalThumbnailURL";
+
     }
 }

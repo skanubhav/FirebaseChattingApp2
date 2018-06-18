@@ -9,8 +9,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ShareCompat;
@@ -64,6 +68,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
@@ -117,7 +122,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
             handleTextMessage(((TextViewHolder) holder), ChatList.get(position));
         }
         else if(ChatList.get(position).getLocalMediaURL().equals("")) {
-            setDownloadListener(holder, ChatList.get(position));
+            setDownloadListener(holder, ChatList.get(position), position);
         }
         else {
             Log.d("ChatMessageAdapter",ChatList.get(position).getLocalMediaURL());
@@ -125,7 +130,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 handleImageMessage(((ImageViewHolder) holder), ChatList.get(position));
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.VIDEO){
-                handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position));
+                handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position), position);
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
             try {
@@ -151,7 +156,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         holder.message_layout.setLayoutParams(layoutParams);
     }
 
-    private void setDownloadListener(final ChatHolder holder, final ChatMessage model) {
+    private void setDownloadListener(final ChatHolder holder, final ChatMessage model, final int position) {
         holder.message_download.setVisibility(View.VISIBLE);
         holder.message_download.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,7 +216,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                                     handleImageMessage(((ImageViewHolder) holder), model);
                                 }
                                 else if(model.getContentType()==ChatMessage.VIDEO){
-                                    handleVideoMessage(((VideoViewHolder) holder),model);
+                                    handleVideoMessage(((VideoViewHolder) holder),model, position);
                                 }
                                 else if(model.getContentType()==ChatMessage.AUDIO){
                                 try {
@@ -231,9 +236,6 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 });
                     }
                 });
-
-
-
     }
 
     @Override
@@ -270,12 +272,52 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         setImageListener(holder.message_image, model.getLocalMediaURL());
     }
 
-    private void handleVideoMessage(final VideoViewHolder holder, final ChatMessage model)  {
+    private void handleVideoMessage(final VideoViewHolder holder, final ChatMessage model, final int position)  {
         ImageView message_video_thumbnail = holder.message_video.findViewById(R.id.message_video_thumbnail);
-        GlideApp.with(message_video_thumbnail.getContext())
-                .load(model.getThumbnailURL())
-                .into(message_video_thumbnail);
-        setVideoListener(holder.message_video, model.getLocalMediaURL());
+        if(model.getLocalThumbnailURL().equals("")) {
+            AsyncTask task = new AsyncTask() {
+                @Override
+                protected Object doInBackground(Object[] objects) {
+                    MediaMetadataRetriever mMMR = new MediaMetadataRetriever();
+                    mMMR.setDataSource(context, Uri.parse(model.getLocalMediaURL()));
+                    Bitmap bitmap = mMMR.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                    String thumbnailURL = MediaStore.Images.Media.insertImage(
+                            context.getContentResolver(),
+                            bitmap,
+                            "T" + new Date().getTime(),
+                            "FCA2 Images"
+                    );
+                    ChatList.get(position).setLocalThumbnailURL(thumbnailURL);
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Object o) {
+                    ContentValues values = new ContentValues();
+                    values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL, ChatList.get(position).getLocalThumbnailURL());
+
+                    UserDBHelper userDBHelper = new UserDBHelper(context);
+                    SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
+                    sqLiteDatabase.update(
+                            CHAT_TABLE_NAME,
+                            values,
+                            MessagingContract.ChatDatabase.MESSAGE_TIME + " =? ",
+                            new String[] {String.valueOf(model.getMessageTime())}
+                    );
+                    notifyDataSetChanged();
+                    super.onPostExecute(o);
+                }
+            };
+            task.execute();
+            Log.d("VideoThumbnail", "Video Thumbnail = " + model.getLocalThumbnailURL());
+        }
+        else {
+            GlideApp.with(message_video_thumbnail.getContext())
+                    .load(Uri.parse(model.getLocalThumbnailURL()))
+                    .into(message_video_thumbnail);
+            setVideoListener(holder.message_video, model.getLocalMediaURL());
+        }
+
     }
 
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
