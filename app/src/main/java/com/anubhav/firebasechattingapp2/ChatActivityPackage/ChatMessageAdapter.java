@@ -322,87 +322,99 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
 
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
         int currentWindow = 0;
-        long playbackPostion = 0;
-        Uri audioURI = Uri.parse(model.getLocalMediaURL());
+        final Uri audioURI = Uri.parse(model.getLocalMediaURL());
 
-        DataSpec dataSpec = new DataSpec(audioURI);
-        final FileDataSource fileDataSource = new FileDataSource();
-        try {
-            fileDataSource.open(dataSpec);
-        } catch (FileDataSource.FileDataSourceException e) {
-            e.printStackTrace();
-        }
 
-        DataSource.Factory factory = new DataSource.Factory() {
+        holder.audio_play.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            SimpleExoPlayer player;
+            long playbackPostion = 0;
+
             @Override
-            public DataSource createDataSource() {
-                return fileDataSource;
+            public void onViewAttachedToWindow(View v) {
+                 player = ExoPlayerFactory.newSimpleInstance(
+                        new DefaultRenderersFactory(context),
+                        new DefaultTrackSelector(),
+                        new DefaultLoadControl());
+
+                DataSpec dataSpec = new DataSpec(audioURI);
+                final FileDataSource fileDataSource = new FileDataSource();
+                try {
+                    fileDataSource.open(dataSpec);
+                } catch (FileDataSource.FileDataSourceException e) {
+                    e.printStackTrace();
+                }
+
+                DataSource.Factory factory = new DataSource.Factory() {
+                    @Override
+                    public DataSource createDataSource() {
+                        return fileDataSource;
+                    }
+                };
+
+                MediaSource audioSource = new ExtractorMediaSource(fileDataSource.getUri(),
+                        factory, new DefaultExtractorsFactory(), null, null);
+
+                holder.audio_play.setPlayer(player);
+                player.addListener(new Player.EventListener() {
+                    @Override
+                    public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
+
+                    }
+
+                    @Override
+                    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+                    }
+
+                    @Override
+                    public void onLoadingChanged(boolean isLoading) {
+
+                    }
+
+                    @Override
+                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+
+                    }
+
+                    @Override
+                    public void onRepeatModeChanged(int repeatMode) {
+
+                    }
+
+                    @Override
+                    public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+                    }
+
+                    @Override
+                    public void onPlayerError(ExoPlaybackException error) {
+
+                    }
+
+                    @Override
+                    public void onPositionDiscontinuity(int reason) {
+
+                    }
+
+                    @Override
+                    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+                    }
+
+                    @Override
+                    public void onSeekProcessed() {
+
+                    }
+                });
+                player.setPlayWhenReady(false);
+                player.prepare(audioSource, true, false);
             }
-        };
-
-        MediaSource audioSource = new ExtractorMediaSource(fileDataSource.getUri(),
-                factory, new DefaultExtractorsFactory(), null, null);
-
-        SimpleExoPlayer player = ExoPlayerFactory.newSimpleInstance(
-                new DefaultRenderersFactory(context),
-                new DefaultTrackSelector(),
-                new DefaultLoadControl());
-
-        player.addListener(new Player.EventListener() {
-            @Override
-            public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-            }
 
             @Override
-            public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-            }
-
-            @Override
-            public void onLoadingChanged(boolean isLoading) {
-
-            }
-
-            @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-            }
-
-            @Override
-            public void onRepeatModeChanged(int repeatMode) {
-
-            }
-
-            @Override
-            public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-            }
-
-            @Override
-            public void onPlayerError(ExoPlaybackException error) {
-
-            }
-
-            @Override
-            public void onPositionDiscontinuity(int reason) {
-
-            }
-
-            @Override
-            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-            }
-
-            @Override
-            public void onSeekProcessed() {
-
+            public void onViewDetachedFromWindow(View v) {
+               player.release();
             }
         });
-
-        holder.audio_play.setPlayer(player);
-        player.setPlayWhenReady(false);
-        player.prepare(audioSource, true, false);
     }
 
     private void handleDocumentMessage(final DocumentViewHolder holder, final ChatMessage model) {

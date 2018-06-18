@@ -361,9 +361,6 @@ public class ChatActivity extends AppCompatActivity {
                 .child(Sender.getUid())
                 .child(Reciever.getUid());
 
-       /* SQLiteDatabase database = userDBHelper.getWritableDatabase();
-        database.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME); */
-
         getSupportActionBar().setTitle(Reciever.getUser());
     }
 
