@@ -116,48 +116,6 @@ public class FullImageActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.download, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId()==R.id.download) {
-            Drawable drawable = image_full.getDrawable();
-            Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
-            String fileName = String.valueOf(new Date().getTime());
-
-            String imageURL = MediaStore.Images.Media.insertImage(
-                    getContentResolver(),
-                    bitmap,
-                    "FCA2" + fileName,
-                    "FCA2 Images"
-            );
-
-            Uri photoUri = Uri.parse(imageURL);
-
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Images.Media.DATE_ADDED, fileName);
-            values.put(MediaStore.Images.Media.DATE_MODIFIED, fileName);
-            values.put(MediaStore.Images.Media.DATE_TAKEN, fileName);
-
-            getContentResolver().update(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    values,
-                    MediaStore.Images.Media._ID + "=?",
-                    new String [] { ContentUris.parseId(photoUri) + "" });
-
-            Log.d("Download",imageURL);
-
-            Toast.makeText(this,
-                    "Image Saved",
-                    Toast.LENGTH_LONG).show();
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
 
     private void showImage(String uri) {
         GlideApp.with(this)

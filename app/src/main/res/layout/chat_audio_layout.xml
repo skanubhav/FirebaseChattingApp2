@@ -29,14 +29,15 @@
                 android:textColor="@color/messageText"
                 android:textStyle="normal|bold" />
 
-            <com.google.android.exoplayer2.ui.SimpleExoPlayerView
+            <com.google.android.exoplayer2.ui.PlayerView
+                android:id="@+id/audio_play"
                 android:layout_width="250dp"
                 android:layout_height="100dp"
-                android:layout_below="@id/message_time"
                 android:layout_alignParentStart="true"
-                android:id="@+id/audio_play">
+                android:layout_below="@id/message_time"
+                app:shutter_background_color="@color/fui_transparent">
 
-            </com.google.android.exoplayer2.ui.SimpleExoPlayerView>
+            </com.google.android.exoplayer2.ui.PlayerView>
 
             <ProgressBar
                 android:id="@+id/download_progress"

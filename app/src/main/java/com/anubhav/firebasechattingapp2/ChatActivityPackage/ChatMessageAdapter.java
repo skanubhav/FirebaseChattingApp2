@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -25,9 +26,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.AudioViewHolder;
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.DocumentViewHolder;
@@ -280,58 +283,22 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
 
     private void handleVideoMessage(final VideoViewHolder holder, final ChatMessage model, final int position)  {
         ImageView message_video_thumbnail = holder.message_video.findViewById(R.id.message_video_thumbnail);
-        if(model.getLocalThumbnailURL().equals("")) {
-            AsyncTask task = new AsyncTask() {
-                @Override
-                protected Object doInBackground(Object[] objects) {
-                    MediaMetadataRetriever mMMR = new MediaMetadataRetriever();
-                    mMMR.setDataSource(context, Uri.parse(model.getLocalMediaURL()));
-                    Bitmap bitmap = mMMR.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-                    String thumbnailURL = MediaStore.Images.Media.insertImage(
-                            context.getContentResolver(),
-                            bitmap,
-                            "T" + new Date().getTime(),
-                            "FCA2 Images"
-                    );
-                    ChatList.get(position).setLocalThumbnailURL(thumbnailURL);
-                    return null;
-                }
-
-                @Override
-                protected void onPostExecute(Object o) {
-                    ContentValues values = new ContentValues();
-                    values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL, ChatList.get(position).getLocalThumbnailURL());
-
-                    UserDBHelper userDBHelper = new UserDBHelper(context);
-                    SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
-                    sqLiteDatabase.update(
-                            CHAT_TABLE_NAME,
-                            values,
-                            MessagingContract.ChatDatabase.MESSAGE_TIME + " =? ",
-                            new String[] {String.valueOf(model.getMessageTime())}
-                    );
-                    notifyDataSetChanged();
-                    super.onPostExecute(o);
-                }
-            };
-            task.execute();
             Log.d("VideoThumbnail", "Video Thumbnail = " + model.getLocalThumbnailURL());
-        }
-        else {
+
             GlideApp.with(message_video_thumbnail.getContext())
-                    .load(Uri.parse(model.getLocalThumbnailURL()))
+                    .asBitmap()
+                    .load(Uri.fromFile(new File(model.getLocalMediaURL())))
                     .into(message_video_thumbnail);
             setVideoListener(holder.message_video, model.getLocalMediaURL());
-        }
-
     }
 
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
         int currentWindow = 0;
         final Uri audioURI = Uri.parse(model.getLocalMediaURL());
+        holder.audio_play.setKeepContentOnPlayerReset(true);
         holder.audio_play.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-            SimpleExoPlayer player;
-            long playbackPostion = 0;
+            private SimpleExoPlayer player;
+            private long playbackPostion = 0;
 
             @Override
             public void onViewAttachedToWindow(View v) {
@@ -359,64 +326,18 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                         factory, new DefaultExtractorsFactory(), null, null);
 
                 holder.audio_play.setPlayer(player);
-                player.addListener(new Player.EventListener() {
-                    @Override
-                    public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-                    }
-
-                    @Override
-                    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-                    }
-
-                    @Override
-                    public void onLoadingChanged(boolean isLoading) {
-
-                    }
-
-                    @Override
-                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-                    }
-
-                    @Override
-                    public void onRepeatModeChanged(int repeatMode) {
-
-                    }
-
-                    @Override
-                    public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-                    }
-
-                    @Override
-                    public void onPlayerError(ExoPlaybackException error) {
-
-                    }
-
-                    @Override
-                    public void onPositionDiscontinuity(int reason) {
-
-                    }
-
-                    @Override
-                    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-                    }
-
-                    @Override
-                    public void onSeekProcessed() {
-
-                    }
-                });
+                holder.audio_play.setShutterBackgroundColor(R.color.fui_transparent);
                 player.setPlayWhenReady(false);
                 player.prepare(audioSource, true, false);
+                player.seekTo(playbackPostion);
+                Log.d("Audio Playback", String.valueOf(playbackPostion));
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
-               player.release();
+                playbackPostion = player.getCurrentPosition();
+                Log.d("Audio Playback", String.valueOf(playbackPostion));
+                player.stop();
             }
         });
     }
@@ -430,20 +351,41 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
             public void onClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 if (fileName.contains(".doc") || fileName.contains(".docx")) {
-                    intent.setDataAndType(uri, "application/msword");
+                    openFile(new File(model.getLocalMediaURL()),"application/msword");
                 }
                 else if(fileName.contains(".pdf")) {
-                    intent.setDataAndType(uri, "application/pdf");
+                    openFile(new File(model.getLocalMediaURL()),"application/pdf");
                 }
                 else if(fileName.contains(".ppt") || fileName.contains(".pptx")) {
-                    intent.setDataAndType(uri, "application/vnd.ms-powerpoint");
+                    openFile(new File(model.getLocalMediaURL()),"application/vnd.ms-powerpoint");
                 }
                 else if(fileName.contains(".xls") || fileName.contains(".xlsx")) {
-                    intent.setDataAndType(uri, "application/vnd.ms-excel");
+                    openFile(new File(model.getLocalMediaURL()),"application/vnd.ms-excel");
                 }
-                context.startActivity(intent);
+                else {
+                    String extension = MimeTypeMap.getFileExtensionFromUrl(model.getLocalMediaURL());
+                    if(extension!=null) {
+                        openFile(new File(model.getLocalMediaURL()), MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension));
+                    }
+                }
             }
         });
+    }
+
+    private void openFile(File file, String mimeType)
+    {
+        Intent viewIntent = new Intent();
+        viewIntent.setAction(Intent.ACTION_VIEW);
+        viewIntent.setDataAndType(Uri.fromFile(file), mimeType);
+        // using the packagemanager to query is faster than trying startActivity
+        // and catching the activity not found exception, which causes a stack unwind.
+        List<ResolveInfo> resolved = context.getPackageManager().queryIntentActivities(viewIntent, 0);
+        if(resolved != null && resolved.size() > 0)  {
+            context.startActivity(viewIntent);
+        }
+        else {
+            Toast.makeText(context, "Cannot open this file",Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setImageListener(final ImageView message_image, final String imageURL) {
