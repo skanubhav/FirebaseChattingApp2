@@ -133,9 +133,10 @@ public class ChatActivity extends AppCompatActivity {
         initializeViews();
         initializeUsers();
 
-        /* SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME);
-        sqLiteDatabase.execSQL(SQL_CREATE_CHAT_ENTRIES); */
+       // SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
+       // sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME);
+        // sqLiteDatabase.execSQL(SQL_CREATE_CHAT_ENTRIES);
+        // sqLiteDatabase.execSQL("DELETE FROM " + CHAT_TABLE_NAME);
         setListeners();
         initializeAdapter();
         initializeLocalData();
@@ -343,7 +344,7 @@ public class ChatActivity extends AppCompatActivity {
                 null,
                 intent.getStringExtra("RecieverPhoto"));
 
-        CHAT_TABLE_NAME = Sender.getUser() + Sender.getUid() + Reciever.getUid();
+        CHAT_TABLE_NAME = Sender.getUser().charAt(0) + Sender.getUid() + Reciever.getUid();
         SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("
                 + MessagingContract.ChatDatabase._ID + " INTEGER PRIMARY KEY, "
                 + MessagingContract.ChatDatabase.MESSAGE_TEXT + " TEXT, "
@@ -630,8 +631,15 @@ public class ChatActivity extends AppCompatActivity {
         }
         else {
             if(new File(data.getPath()).length()<=26214400) {
-                String fileName = new Date().getTime() + " " +  getFileName(data) ;
+                String fileName = null;
+                try {
+                    String filePath = getPath(this, data);
+                    fileName = new Date().getTime() + " " +  filePath.substring(filePath.lastIndexOf("/")+1);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
                 UploadRef = storageReference.child(typeOfData).child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
+                Log.d("File Upload", fileName);
                 UploadTask uploadTask = UploadRef.putFile(data);
 
                 showNotification(uploadTask, contentType, data, this);
@@ -789,6 +797,7 @@ public class ChatActivity extends AppCompatActivity {
             try {
                 if (cursor != null && cursor.moveToFirst()) {
                     result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    Log.d("File Name", result);
                 }
             } finally {
                 cursor.close();

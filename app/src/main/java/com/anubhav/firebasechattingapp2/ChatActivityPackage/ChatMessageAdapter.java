@@ -88,29 +88,35 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     @Override
     public ChatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        ChatHolder chatHolder = null;
 
         switch (viewType) {
             case ChatMessage.TEXT :
-                return new TextViewHolder(
+                chatHolder = new TextViewHolder(
                         inflater.inflate(R.layout.chat_text_layout, parent, false));
+                break;
 
             case ChatMessage.IMAGE :
-                return new ImageViewHolder(
+                chatHolder = new ImageViewHolder(
                         inflater.inflate(R.layout.chat_image_layout, parent, false));
+                break;
 
             case ChatMessage.VIDEO :
-                return new VideoViewHolder(
+                chatHolder =  new VideoViewHolder(
                         inflater.inflate(R.layout.chat_video_layout, parent, false));
+                break;
 
             case ChatMessage.AUDIO :
-                return new AudioViewHolder(
+                chatHolder = new AudioViewHolder(
                         inflater.inflate(R.layout.chat_audio_layout, parent, false));
+                break;
 
             case ChatMessage.DOCUMENT :
-                return new DocumentViewHolder(
+                chatHolder = new DocumentViewHolder(
                         inflater.inflate(R.layout.chat_document_layout, parent, false));
+                break;
         }
-        return null;
+        return chatHolder;
     }
 
     @Override
@@ -133,11 +139,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position), position);
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
-            try {
+           try {
                 handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+            catch (IOException e) { e.printStackTrace(); }
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
                handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
@@ -169,6 +174,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                     @Override
                     public void onComplete(@NonNull Task<StorageMetadata> task) {
                         String fileName = task.getResult().getName();
+                        Log.d("File Download", fileName);
                         File downloadLocation = null;
                         if(model.getContentType()==ChatMessage.IMAGE) {
                             downloadLocation = new File(Environment.getExternalStoragePublicDirectory(
@@ -323,8 +329,6 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
         int currentWindow = 0;
         final Uri audioURI = Uri.parse(model.getLocalMediaURL());
-
-
         holder.audio_play.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             SimpleExoPlayer player;
             long playbackPostion = 0;

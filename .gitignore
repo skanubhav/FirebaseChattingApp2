@@ -8,3 +8,5 @@
 /build
 /captures
 .externalNativeBuild
+functions/node_modules/
+functions/src/

@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "827388955795-nvnqj1vt2sb1em7q1kf6dbi1hgips155.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anubhav.firebasechattingapp2",
+            "certificate_hash": "2376e046cf677dfdb97cff505b1f0d996d0c173f"
+          }
+        },
+        {
           "client_id": "827388955795-do7te5kn1ogstjja7s8no0llckrdp6vm.apps.googleusercontent.com",
           "client_type": 3
         },
@@ -33,8 +41,13 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "827388955795-do7te5kn1ogstjja7s8no0llckrdp6vm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2

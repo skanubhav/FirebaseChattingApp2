@@ -64,6 +64,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        userDBHelper.close();
+        super.onDestroy();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         initializeUser();
