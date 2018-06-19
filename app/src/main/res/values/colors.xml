@@ -14,4 +14,5 @@
     <color name="video_background">#000000</color>
     <color name="background_material_light">#ffffff</color>
     <color name="primary_text_material_dark">#d67676</color>
+    <color name="chat_holder_default">#ffffff</color>
 </resources>

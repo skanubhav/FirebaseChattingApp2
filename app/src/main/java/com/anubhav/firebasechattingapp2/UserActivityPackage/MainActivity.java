@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView listOfUsers;
     private ActionBar actionBar;
     private DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
-    private User user;
+    private User user = null;
     private List<User> UserList;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
 
@@ -72,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        initializeUser();
-        actionBar.setTitle("Welcome " + user.getUser());
+        if(user !=null)
+            actionBar.setTitle("Welcome " + user.getUser());
     }
 
     @Override

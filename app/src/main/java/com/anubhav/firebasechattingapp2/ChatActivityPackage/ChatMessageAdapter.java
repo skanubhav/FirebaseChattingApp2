@@ -127,6 +127,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         holder.message_time.setText(DateFormat.format("dd/MM/yyyy (HH:mm)",
                 ChatList.get(position).getMessageTime()));
 
+        if(ChatActivity.selectedPosition == position) {
+           holder.message_select.setVisibility(View.VISIBLE);
+        }
+        else {
+           holder.message_select.setVisibility(View.GONE);
+        }
+
         if (ChatList.get(position).getContentType()==ChatMessage.TEXT) {
             handleTextMessage(((TextViewHolder) holder), ChatList.get(position));
         }
@@ -212,32 +219,15 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                                 ContentValues values = new ContentValues();
                                 UserDBHelper userDBHelper = new UserDBHelper(context);
                                 SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
-                                values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL,downloadFile.getAbsolutePath());
+                                values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL, downloadFile.getAbsolutePath());
 
-                                model.setLocalMediaURL(downloadFile.getAbsolutePath());
+                                ChatList.get(position).setLocalMediaURL(downloadFile.getAbsolutePath());
+                                notifyDataSetChanged();
 
                                 sqLiteDatabase.update(CHAT_TABLE_NAME,
                                         values,
                                         MessagingContract.ChatDatabase.MESSAGE_TIME + "=?",
-                                        new String[] {String.valueOf(model.getMessageTime())});
-
-                                if(model.getContentType()==ChatMessage.IMAGE) {
-                                    handleImageMessage(((ImageViewHolder) holder), model);
-                                }
-                                else if(model.getContentType()==ChatMessage.VIDEO){
-                                    handleVideoMessage(((VideoViewHolder) holder),model, position);
-                                }
-                                else if(model.getContentType()==ChatMessage.AUDIO){
-                                try {
-                                handleAudioMessage(((AudioViewHolder) holder), model);
-                                } catch (IOException e) {
-                                 e.printStackTrace();
-                                  }
-                                }
-                                else if(model.getContentType()==ChatMessage.DOCUMENT) {
-                                  handleDocumentMessage(((DocumentViewHolder) holder), model);
-                                }
-
+                                        new String[]{String.valueOf(model.getMessageTime())});
                                 holder.message_download_progress.setVisibility(View.GONE);
                             }
                         });
@@ -326,6 +316,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                         factory, new DefaultExtractorsFactory(), null, null);
 
                 holder.audio_play.setPlayer(player);
+
                 holder.audio_play.setShutterBackgroundColor(R.color.fui_transparent);
                 player.setPlayWhenReady(false);
                 player.prepare(audioSource, true, false);
@@ -335,9 +326,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
 
             @Override
             public void onViewDetachedFromWindow(View v) {
-                playbackPostion = player.getCurrentPosition();
-                Log.d("Audio Playback", String.valueOf(playbackPostion));
-                player.stop();
+                if(player!=null) {
+                    playbackPostion = player.getCurrentPosition();
+                    player.stop();
+                }
             }
         });
     }
@@ -345,6 +337,8 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     private void handleDocumentMessage(final DocumentViewHolder holder, final ChatMessage model) {
         final Uri uri = Uri.parse(model.getLocalMediaURL());
         final String fileName = uri.getLastPathSegment();
+        holder.message_document.setVisibility(View.VISIBLE);
+        holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_attach_document));
         holder.message_document_name.setText(fileName);
         holder.message_document.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -372,8 +366,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         });
     }
 
-    private void openFile(File file, String mimeType)
-    {
+    private void openFile(File file, String mimeType)  {
         Intent viewIntent = new Intent();
         viewIntent.setAction(Intent.ACTION_VIEW);
         viewIntent.setDataAndType(Uri.fromFile(file), mimeType);

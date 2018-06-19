@@ -3,6 +3,7 @@ package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -17,6 +18,7 @@ public class ChatHolder extends RecyclerView.ViewHolder {
     RelativeLayout message_relativelayout;
     ImageView message_download;
     ProgressBar message_download_progress;
+    FrameLayout message_select;
 
    public ChatHolder (View view) {
         super(view);
@@ -25,5 +27,6 @@ public class ChatHolder extends RecyclerView.ViewHolder {
         message_relativelayout = view.findViewById(R.id.message_relativelayout);
         message_download = view.findViewById(R.id.download_button);
         message_download_progress = view.findViewById(R.id.download_progress);
+        message_select = view.findViewById(R.id.message_select);
     }
 }

@@ -30,8 +30,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AnimationUtils;
@@ -117,10 +119,67 @@ public class ChatActivity extends AppCompatActivity {
     public static int RC_TAKE_AUDIO = 40;
     public static int RC_TAKE_DOCUMENT = 50;
 
+    // Modes
+    public static int CHAT_MODE=60;
+    public static int SELECT_MODE=70;
+
+    private int mode;
+    public static int selectedPosition;
+
     public static int NOTIFICATION_ID = 100;
 
     Uri imageFilePath;
     String thumbnailURL = null;
+
+    public static interface ClickListener{
+        public void onClick(View view,int position);
+        public void onLongClick(View view,int position);
+    }
+
+    class RecyclerTouchListener implements RecyclerView.OnItemTouchListener{
+
+        private ClickListener clicklistener;
+        private GestureDetector gestureDetector;
+
+        public RecyclerTouchListener(Context context, final RecyclerView recycleView, final ClickListener clicklistener){
+
+            this.clicklistener=clicklistener;
+            gestureDetector=new GestureDetector(context,new GestureDetector.SimpleOnGestureListener(){
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    return true;
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    View child=recycleView.findChildViewUnder(e.getX(),e.getY());
+                    if(child!=null && clicklistener!=null){
+                        clicklistener.onLongClick(child,recycleView.getChildAdapterPosition(child));
+                    }
+                }
+            });
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+            View child=rv.findChildViewUnder(e.getX(),e.getY());
+            if(child!=null && clicklistener!=null && gestureDetector.onTouchEvent(e)){
+                clicklistener.onClick(child,rv.getChildAdapterPosition(child));
+            }
+
+            return false;
+        }
+
+        @Override
+        public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+
+        }
+
+        @Override
+        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+        }
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -332,6 +391,9 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeUsers() {
+        mode = CHAT_MODE;
+        selectedPosition = -1;
+
         Intent intent = getIntent();
         Sender = new User(intent.getStringExtra("SenderName"),
                 intent.getStringExtra("SenderID"),
@@ -582,7 +644,6 @@ public class ChatActivity extends AppCompatActivity {
 
     private void displayChatMessages() {
         listOfMessages.setAdapter(mAdapter);
-       // mLayoutManager.smoothScrollToPosition(listOfMessages, null,ChatList.size());
 
         listOfMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -620,6 +681,27 @@ public class ChatActivity extends AppCompatActivity {
             }
 
         });
+
+        listOfMessages.addOnItemTouchListener(new RecyclerTouchListener(this,
+                listOfMessages, new ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                if(mode==SELECT_MODE) {
+                    selectedPosition = position;
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onLongClick(View view, int position) {
+                if(mode==CHAT_MODE) {
+                    mode = SELECT_MODE;
+                    selectedPosition = position;
+                    mAdapter.notifyDataSetChanged();;
+                    Log.d("Long Click", ChatList.get(position).getMessageText());
+                }
+            }
+        }));
         listOfMessages.getAdapter().notifyDataSetChanged();
     }
 
