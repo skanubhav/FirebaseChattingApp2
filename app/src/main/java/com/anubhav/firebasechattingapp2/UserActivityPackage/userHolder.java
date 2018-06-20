@@ -4,6 +4,7 @@ import android.provider.ContactsContract;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,7 +13,7 @@ import com.anubhav.firebasechattingapp2.R;
 public class userHolder extends RecyclerView.ViewHolder {
     TextView user;
     TextView user_last_message;
-    CardView user_card;
+    FrameLayout user_card;
     ImageView message_stat;
     ImageView user_image;
 

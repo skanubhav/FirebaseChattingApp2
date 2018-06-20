@@ -57,22 +57,22 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
 
     @Override
     public void onBindViewHolder(@NonNull final userHolder holder,final int position) {
+        if(Sender!=null) {
+            setText(holder, position);
 
-        setText(holder, position);
+            setImage(holder, position);
 
-        setImage(holder, position);
+            setListener(holder, UserList.get(position));
 
-        setListener(holder, UserList.get(position));
-
-        AsyncTask task = new AsyncTask() {
-            @Override
-            protected Object doInBackground(Object[] objects) {
-                setFirebaseDatabaseListener(position, UserList.get(position), holder.user.getContext());
-                return null;
-            }
-        };
-        task.execute();
-
+            AsyncTask task = new AsyncTask() {
+                @Override
+                protected Object doInBackground(Object[] objects) {
+                    setFirebaseDatabaseListener(position, UserList.get(position), holder.user.getContext());
+                    return null;
+                }
+            };
+            task.execute();
+        }
     }
 
     private void setText(userHolder holder, int position) {
@@ -81,6 +81,7 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
     }
 
     private void setImage(userHolder holder, int position) {
+
         if(UserList.get(position).getLastMessageStat().equals("OUT_MESSAGE")){
             holder.message_stat.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_outgoing_message));
         }
@@ -161,7 +162,7 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
     }
 
     private void setListener(final userHolder holder, final User Reciever) {
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
+        holder.user_card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 {

@@ -23,6 +23,7 @@
 
         <TextView
             android:id="@+id/user"
+            android:layout_centerVertical="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
@@ -31,26 +32,6 @@
             android:text="Default"
             android:textSize="20dp"
             android:layout_toRightOf="@id/profile_image" />
-
-        <TextView
-            android:id="@+id/user_last_message"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/user"
-            android:layout_marginBottom="3dp"
-            android:layout_toRightOf="@id/message_stat"
-            android:padding="5dp"
-            android:maxLines="1"
-            android:textSize="15dp" />
-
-        <ImageView
-            android:id="@+id/message_stat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/user"
-            android:layout_marginTop="4dp"
-            android:layout_toRightOf="@id/profile_image"
-            android:scaleType="center" />
 
     </RelativeLayout>
 

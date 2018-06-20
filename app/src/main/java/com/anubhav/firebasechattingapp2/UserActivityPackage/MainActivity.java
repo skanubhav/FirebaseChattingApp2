@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -45,17 +46,19 @@ public class MainActivity extends AppCompatActivity {
     private ActionBar actionBar;
     private DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("Users");
     private User user = null;
+    private DividerItemDecoration dividerItemDecoration;
     private List<User> UserList;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        initialize();
-        signIn();
-    }
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    initialize();
+    displayUsers();
+    signIn();
+}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -121,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
                 actionBar.setTitle("Welcome " + user.getUser());
+                initializeAdapter();
                 initializeCloudData();
                 initializeLocalData();
             }
@@ -149,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG)
                     .show();
             actionBar.setTitle("Welcome " + user.getUser());
+            initializeAdapter();
             initializeCloudData();
             initializeLocalData();
         }
@@ -175,12 +180,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void displayUsers() {
-        mAdapter = new UserRecyclerAdapter(UserList, user, this);
+        dividerItemDecoration = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        initializeAdapter();
         listOfUsers.setLayoutManager(mLayoutManager);
-        listOfUsers.setAdapter(mAdapter);
 
-        listOfUsers.getAdapter().notifyDataSetChanged();
-        listOfUsers.scheduleLayoutAnimation();
+        mAdapter.notifyDataSetChanged();
+        listOfUsers.addItemDecoration(dividerItemDecoration);
+    }
+
+    private void initializeAdapter() {
+        mAdapter = new UserRecyclerAdapter(UserList, user, this);
+        listOfUsers.setAdapter(mAdapter);
     }
 
     private void initializeLocalData() {
@@ -213,13 +223,14 @@ public class MainActivity extends AppCompatActivity {
             String profileImage = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE));
             Log.d("SQLiteDatabase", name + " " + id);
             User newUser = new User (name, id, lastMessage, lastMessageStat, profileImage);
-           for(int i = 0; i< UserList.size(); i++) {
-               flag = UserList.get(i).getUid().equals(newUser.getUid());
-           }
-           if(!flag)
-               UserList.add(newUser);
+            for(int i = 0; i< UserList.size(); i++) {
+                flag = UserList.get(i).getUid().equals(newUser.getUid());
+            }
+            if(!flag) {
+                UserList.add(newUser);
+                mAdapter.notifyItemInserted(UserList.size());
+            }
         }
-        displayUsers();
     }
 
     private void initializeCloudData() {
@@ -240,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                         values.put(MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE, Uimage);
                         database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
                         UserList.add(new User(Uname, Uid, "", "", Uimage));
-                        displayUsers();
+                        mAdapter.notifyItemInserted(UserList.size());
                     }
                     Log.d("UserValueEvent",Uid + " " + Uname);
                 }

@@ -48,7 +48,13 @@
             android:name=".ChatActivityPackage.DocumentViewerActivity">
         </activity>
 
-        <activity android:name=".UserActivityPackage.ProfilePageActivity">
+        <activity
+            android:name=".UserActivityPackage.ProfilePageActivity">
+
+        </activity>
+
+        <activity
+            android:name=".ChatActivityPackage.ForwardActivity">
 
         </activity>
 

@@ -6,5 +6,25 @@
         android:icon="@drawable/ic_attach_file"
         android:title="attach_file"
         android:id="@+id/attach_file"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" >
+
+    </item>
+
+    <item
+        android:title="forward_message"
+        android:id="@+id/forward_message"
+        app:showAsAction="ifRoom"
+        android:visible="false"
+        android:icon="@drawable/ic_message_forward">
+    </item>
+
+    <item
+        android:title="copy_text"
+        android:visible="false"
+        app:showAsAction="ifRoom"
+        android:id="@+id/copy_text"
+        android:icon="@drawable/ic_copy_text" >
+
+    </item>
+
 </menu>

@@ -44,6 +44,8 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ProfilePageActivity extends AppCompatActivity {
 
@@ -90,6 +92,17 @@ public class ProfilePageActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void onBackPressed() {
+        if(MODE == EDIT_MODE) {
+            setDisabled();
+            userNameView.setText(user.getUser());
+            userEmailView.setText(userEmail);
+            userPasswordView.setText(R.string.password);
+        }
+        else
+            super.onBackPressed();
+    }
 
     private void initialize() {
         uploadProgress = findViewById(R.id.profile_image_loading);
@@ -124,7 +137,7 @@ public class ProfilePageActivity extends AppCompatActivity {
         }
 
         userNameView.setText(user.getUser());
-        userEmailView.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
+        userEmailView.setText(userEmail);
     }
 
     private void setListener() {
@@ -163,7 +176,10 @@ public class ProfilePageActivity extends AppCompatActivity {
                     else {
                         if(!userEmail.equals(userEmailView.getText().toString())) {
                             Log.d("ProfilePage", userEmailView.getText().toString());
-                            reuthenticateAndChange("EMAIL");
+                            if(isEmailValid(userEmailView.getText().toString()))
+                                reuthenticateAndChange("EMAIL");
+                            else
+                                showToast("E-Mail Invalid");
                         }
 
                         if(!userPasswordView.getText().toString().equals("password")) {
@@ -173,6 +189,13 @@ public class ProfilePageActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    public static boolean isEmailValid(String email) {
+        String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
+        Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
     }
 
     private void setDisabled() {

@@ -149,10 +149,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position), position);
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
-           try {
+           /* try {
                 handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
             }
-            catch (IOException e) { e.printStackTrace(); }
+            catch (IOException e) { e.printStackTrace(); } */
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
                handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));

@@ -1,6 +1,8 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
 import android.animation.Animator;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -118,10 +120,11 @@ public class ChatActivity extends AppCompatActivity {
     public static int RC_TAKE_VIDEO = 30;
     public static int RC_TAKE_AUDIO = 40;
     public static int RC_TAKE_DOCUMENT = 50;
+    public static int RC_FORWARD_MESSAGE = 60;
 
     // Modes
-    public static int CHAT_MODE=60;
-    public static int SELECT_MODE=70;
+    public static int CHAT_MODE=70;
+    public static int SELECT_MODE=80;
 
     private int mode;
     public static int selectedPosition;
@@ -188,14 +191,24 @@ public class ChatActivity extends AppCompatActivity {
 
         storageReference = FirebaseStorage.getInstance().getReference();
         ChatList = new ArrayList<>();
+        Intent intent = getIntent();
 
         initializeViews();
-        initializeUsers();
+        initializeUsers(new User(intent.getStringExtra("SenderName"),
+                intent.getStringExtra("SenderID"),
+                null,
+                null,
+                intent.getStringExtra("SenderPhoto")),
+                new User(intent.getStringExtra("RecieverName"),
+                        intent.getStringExtra("RecieverID"),
+                        null,
+                        null,
+                        intent.getStringExtra("RecieverPhoto")));
 
-       // SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
-       // sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME);
-        // sqLiteDatabase.execSQL(SQL_CREATE_CHAT_ENTRIES);
-        // sqLiteDatabase.execSQL("DELETE FROM " + CHAT_TABLE_NAME);
+      // SQLiteDatabase sqLiteDatabase = userDBHelper.getWritableDatabase();
+       //sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CHAT_TABLE_NAME);
+       // sqLiteDatabase.execSQL(SQL_CREATE_CHAT_ENTRIES);
+        //sqLiteDatabase.execSQL("DELETE FROM " + CHAT_TABLE_NAME);
         setListeners();
         initializeAdapter();
         initializeLocalData();
@@ -203,9 +216,29 @@ public class ChatActivity extends AppCompatActivity {
         displayChatMessages();
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.addmedia,menu);
+        if(mode == CHAT_MODE) {
+            menu.findItem(R.id.attach_file).setVisible(true);
+            menu.findItem(R.id.forward_message).setVisible(false);
+            menu.findItem(R.id.copy_text).setVisible(false);
+        }
+        else if(mode == SELECT_MODE) {
+            menu.findItem(R.id.attach_file).setVisible(false);
+            menu.findItem(R.id.forward_message).setVisible(true);
+            if(selectedPosition !=-1) {
+                if(ChatList.get(selectedPosition).getContentType() == ChatMessage.TEXT) {
+                    menu.findItem(R.id.copy_text).setVisible(true);
+                }
+                else {
+                    if(ChatList.get(selectedPosition).getLocalMediaURL().equals(""))
+                        menu.findItem(R.id.forward_message).setVisible(false);
+                    menu.findItem(R.id.copy_text).setVisible(false);
+                }
+            }
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -284,6 +317,23 @@ public class ChatActivity extends AppCompatActivity {
                 animator.start();
             }
         }
+        else  {
+            if(item.getItemId() == R.id.copy_text) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Chat Message", ChatList.get(selectedPosition).getMessageText());
+                clipboard.setPrimaryClip(clip);
+                showToast("Message Copied");
+                selectedPosition = -1;
+                mAdapter.notifyDataSetChanged();
+            }
+            else if(item.getItemId() == R.id.forward_message){
+                Intent intent = new Intent(ChatActivity.this, ForwardActivity.class);
+                startActivityForResult(intent, RC_FORWARD_MESSAGE);
+                Log.d("Forward Message", ChatList.get(selectedPosition).getMessageText());
+            }
+            mode = CHAT_MODE;
+            invalidateOptionsMenu();
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -335,6 +385,36 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         }
+
+        else if(requestCode == RC_FORWARD_MESSAGE) {
+            if(resultCode == RESULT_OK) {
+                ChatMessage forwardMessage = ChatList.get(selectedPosition);
+                selectedPosition = -1;
+                mAdapter.notifyDataSetChanged();
+                Log.d("Reciever Name and ID", data.getStringExtra("Reciever Name")
+                        + " "
+                        +data.getStringExtra("Reciever ID"));
+                initializeUsers(Sender,
+                        new User(
+                                data.getStringExtra("Reciever Name"),
+                                data.getStringExtra("Reciever ID"),
+                                null,
+                                null,
+                                data.getStringExtra("Reciever Photo")
+                        ));
+                ChatList.clear();
+                NumberOfMessages = 20;
+                initializeAdapter();
+                initializeLocalData();
+                initializeCloudData();
+                displayChatMessages();
+                sendData(forwardMessage.getMessageText(),
+                        forwardMessage.getContentType(),
+                        forwardMessage.getThumbnailURL(),
+                        forwardMessage.getLocalMediaURL());
+                showToast("Message Forwarded");
+            }
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -375,6 +455,18 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if(mode == SELECT_MODE) {
+            mode = CHAT_MODE;
+            selectedPosition = -1;
+            mAdapter.notifyDataSetChanged();
+            invalidateOptionsMenu();
+        }
+        else
+            super.onBackPressed();
+    }
+
     // CALLED AT START OF ACTIVITY
     private void initializeViews() {
         listOfMessages = findViewById(R.id.list_of_messages);
@@ -390,21 +482,13 @@ public class ChatActivity extends AppCompatActivity {
         listOfMessages.setLayoutManager(mLayoutManager);
     }
 
-    private void initializeUsers() {
+    private void initializeUsers(User sender, User reciever) {
         mode = CHAT_MODE;
         selectedPosition = -1;
 
         Intent intent = getIntent();
-        Sender = new User(intent.getStringExtra("SenderName"),
-                intent.getStringExtra("SenderID"),
-                null,
-                null,
-                intent.getStringExtra("SenderPhoto"));
-        Reciever = new User(intent.getStringExtra("RecieverName"),
-                intent.getStringExtra("RecieverID"),
-                null,
-                null,
-                intent.getStringExtra("RecieverPhoto"));
+        Sender = sender;
+        Reciever = reciever;
 
         CHAT_TABLE_NAME = Sender.getUser().charAt(0) + Sender.getUid() + Reciever.getUid();
         SQL_CREATE_CHAT_ENTRIES =  "CREATE TABLE " + CHAT_TABLE_NAME + " ("
@@ -687,7 +771,16 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onClick(View view, int position) {
                 if(mode==SELECT_MODE) {
-                    selectedPosition = position;
+                    if(selectedPosition == position) {
+                        invalidateOptionsMenu();
+                        selectedPosition = -1;
+                        mode = CHAT_MODE;
+                    }
+                    else{
+                        if(ChatList.get(selectedPosition).getContentType() != ChatList.get(position).getContentType())
+                            invalidateOptionsMenu();
+                        selectedPosition = position;
+                    }
                     mAdapter.notifyDataSetChanged();
                 }
             }
@@ -695,6 +788,7 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onLongClick(View view, int position) {
                 if(mode==CHAT_MODE) {
+                    invalidateOptionsMenu();
                     mode = SELECT_MODE;
                     selectedPosition = position;
                     mAdapter.notifyDataSetChanged();;
