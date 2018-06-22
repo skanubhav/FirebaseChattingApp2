@@ -44,6 +44,7 @@
                         android:layout_width="250dp"
                         android:layout_height="250dp"
                         android:id="@+id/message_video_thumbnail"
+                        android:visibility="gone"
                         android:scaleType="centerCrop"
                         android:layout_centerInParent="true"/>
 
@@ -51,6 +52,7 @@
                         android:layout_width="100dp"
                         android:layout_height="100dp"
                         android:id="@+id/message_video_play"
+                        android:visibility="gone"
                         android:src="@drawable/ic_video_play"
                         android:layout_centerInParent="true"/>
 
@@ -86,7 +88,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:background="@android:drawable/screen_background_dark_transparent">
+        android:background="@color/selected_message">
 
     </FrameLayout>
 

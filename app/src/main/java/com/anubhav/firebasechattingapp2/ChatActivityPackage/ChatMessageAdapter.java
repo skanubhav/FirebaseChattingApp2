@@ -149,10 +149,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position), position);
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
-           /* try {
+           try {
                 handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
             }
-            catch (IOException e) { e.printStackTrace(); } */
+            catch (IOException e) { e.printStackTrace(); }
             }
             else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
                handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
@@ -267,12 +267,14 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     }
 
     private void handleImageMessage(ImageViewHolder holder, ChatMessage model) {
+        holder.message_image.setVisibility(View.VISIBLE);
         showImage(holder.message_image, model.getLocalMediaURL());
         setImageListener(holder.message_image, model.getLocalMediaURL());
     }
 
     private void handleVideoMessage(final VideoViewHolder holder, final ChatMessage model, final int position)  {
         ImageView message_video_thumbnail = holder.message_video.findViewById(R.id.message_video_thumbnail);
+        message_video_thumbnail.setVisibility(View.VISIBLE);
             Log.d("VideoThumbnail", "Video Thumbnail = " + model.getLocalThumbnailURL());
 
             GlideApp.with(message_video_thumbnail.getContext())
@@ -283,51 +285,62 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     }
 
     private void handleAudioMessage(final AudioViewHolder holder, final ChatMessage model) throws IOException {
-        int currentWindow = 0;
         final Uri audioURI = Uri.parse(model.getLocalMediaURL());
-        holder.audio_play.setKeepContentOnPlayerReset(true);
+
         holder.audio_play.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+
             private SimpleExoPlayer player;
-            private long playbackPostion = 0;
 
             @Override
             public void onViewAttachedToWindow(View v) {
-                 player = ExoPlayerFactory.newSimpleInstance(
-                        new DefaultRenderersFactory(context),
-                        new DefaultTrackSelector(),
-                        new DefaultLoadControl());
 
-                DataSpec dataSpec = new DataSpec(audioURI);
-                final FileDataSource fileDataSource = new FileDataSource();
-                try {
-                    fileDataSource.open(dataSpec);
-                } catch (FileDataSource.FileDataSourceException e) {
-                    e.printStackTrace();
-                }
+                holder.start_audio.setVisibility(View.VISIBLE);
+                holder.audio_name.setVisibility(View.VISIBLE);
 
-                DataSource.Factory factory = new DataSource.Factory() {
+                holder.audio_name.setText("Play Audio: " + audioURI.getLastPathSegment());
+                holder.audio_play.setVisibility(View.GONE);
+                holder.start_audio.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public DataSource createDataSource() {
-                        return fileDataSource;
+                    public void onClick(View v) {
+                        holder.start_audio.setVisibility(View.GONE);
+                        holder.audio_name.setVisibility(View.GONE);
+                        player = ExoPlayerFactory.newSimpleInstance(
+                                new DefaultRenderersFactory(context),
+                                new DefaultTrackSelector(),
+                                new DefaultLoadControl());
+
+                        DataSpec dataSpec = new DataSpec(audioURI);
+                        final FileDataSource fileDataSource = new FileDataSource();
+                        try {
+                            fileDataSource.open(dataSpec);
+                        } catch (FileDataSource.FileDataSourceException e) {
+                            e.printStackTrace();
+                        }
+
+                        DataSource.Factory factory = new DataSource.Factory() {
+                            @Override
+                            public DataSource createDataSource() {
+                                return fileDataSource;
+                            }
+                        };
+
+                        MediaSource audioSource = new ExtractorMediaSource(fileDataSource.getUri(),
+                                factory, new DefaultExtractorsFactory(), null, null);
+
+                        holder.audio_play.setPlayer(player);
+
+                        holder.audio_play.setShutterBackgroundColor(R.color.fui_transparent);
+                        player.setPlayWhenReady(false);
+                        player.prepare(audioSource, true, false);
+                        player.prepare(audioSource, true, false);
+                        holder.audio_play.setVisibility(View.VISIBLE);
                     }
-                };
-
-                MediaSource audioSource = new ExtractorMediaSource(fileDataSource.getUri(),
-                        factory, new DefaultExtractorsFactory(), null, null);
-
-                holder.audio_play.setPlayer(player);
-
-                holder.audio_play.setShutterBackgroundColor(R.color.fui_transparent);
-                player.setPlayWhenReady(false);
-                player.prepare(audioSource, true, false);
-                player.seekTo(playbackPostion);
-                Log.d("Audio Playback", String.valueOf(playbackPostion));
+                });
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
                 if(player!=null) {
-                    playbackPostion = player.getCurrentPosition();
                     player.stop();
                 }
             }
@@ -393,6 +406,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
     }
 
     private void setVideoListener(final RelativeLayout message_video, final String videoURL) {
+        message_video.findViewById(R.id.message_video_play).setVisibility(View.VISIBLE);
         message_video.findViewById(R.id.message_video_play)
                 .setOnClickListener(new View.OnClickListener() {
                     @Override

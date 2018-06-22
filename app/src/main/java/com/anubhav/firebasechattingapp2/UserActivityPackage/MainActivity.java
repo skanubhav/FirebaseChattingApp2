@@ -35,6 +35,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -228,9 +230,15 @@ public class MainActivity extends AppCompatActivity {
             }
             if(!flag) {
                 UserList.add(newUser);
-                mAdapter.notifyItemInserted(UserList.size());
             }
         }
+        Collections.sort(UserList, new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+                return o1.getUser().compareTo(o2.getUser());
+            }
+        });
+        mAdapter.notifyDataSetChanged();
     }
 
     private void initializeCloudData() {
@@ -251,6 +259,12 @@ public class MainActivity extends AppCompatActivity {
                         values.put(MessagingContract.UserDatabase.COLUMN_PROFILE_IMAGE, Uimage);
                         database.insert(MessagingContract.UserDatabase.TABLE_NAME, null, values);
                         UserList.add(new User(Uname, Uid, "", "", Uimage));
+                        Collections.sort(UserList, new Comparator<User>() {
+                            @Override
+                            public int compare(User o1, User o2) {
+                                return o1.getUser().compareTo(o2.getUser());
+                            }
+                        });
                         mAdapter.notifyItemInserted(UserList.size());
                     }
                     Log.d("UserValueEvent",Uid + " " + Uname);

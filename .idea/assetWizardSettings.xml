@@ -34,7 +34,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/content/ic_content_copy_black_24dp.xml" />
+                                                <entry key="url" value="jar:file:/C:/Program%20Files/Android/Android%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_play_circle_filled_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -44,8 +44,9 @@
                                   </option>
                                   <option name="values">
                                     <map>
-                                      <entry key="outputName" value="ic_copy_text" />
-                                      <entry key="themeColor" value="ffffff" />
+                                      <entry key="outputName" value="ic_play_audio" />
+                                      <entry key="theme" value="CUSTOM" />
+                                      <entry key="themeColor" value="181615" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -84,11 +85,8 @@
                                   <option name="values">
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
-                                      <entry key="backgroundColor" value="e6e6e6" />
                                       <entry key="foregroundAssetType" value="CLIP_ART" />
-                                      <entry key="legacyIconShape" value="CIRCLE" />
                                       <entry key="outputName" value="default_profile_image" />
-                                      <entry key="webIconShape" value="CIRCLE" />
                                     </map>
                                   </option>
                                 </PersistentState>

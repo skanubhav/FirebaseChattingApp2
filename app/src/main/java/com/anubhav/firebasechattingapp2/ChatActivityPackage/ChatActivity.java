@@ -389,8 +389,6 @@ public class ChatActivity extends AppCompatActivity {
         else if(requestCode == RC_FORWARD_MESSAGE) {
             if(resultCode == RESULT_OK) {
                 ChatMessage forwardMessage = ChatList.get(selectedPosition);
-                selectedPosition = -1;
-                mAdapter.notifyDataSetChanged();
                 Log.d("Reciever Name and ID", data.getStringExtra("Reciever Name")
                         + " "
                         +data.getStringExtra("Reciever ID"));
@@ -414,6 +412,8 @@ public class ChatActivity extends AppCompatActivity {
                         forwardMessage.getLocalMediaURL());
                 showToast("Message Forwarded");
             }
+            selectedPosition = -1;
+            mAdapter.notifyDataSetChanged();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -462,6 +462,41 @@ public class ChatActivity extends AppCompatActivity {
             selectedPosition = -1;
             mAdapter.notifyDataSetChanged();
             invalidateOptionsMenu();
+        }
+        else if(attachFrameLayout.getVisibility()==View.VISIBLE) {
+            int cx = attachCard.getWidth()/2;
+            int cy = attachCard.getHeight()/2;
+            float radius = (float) Math.hypot(cx, cy);
+            Animator animator = ViewAnimationUtils.createCircularReveal(
+                    attachCard,
+                    cx,
+                    cy,
+                    radius,
+                    0
+            );
+            animator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    attachFrameLayout.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+
+            animator.start();
         }
         else
             super.onBackPressed();

@@ -7,7 +7,7 @@
     <color name="messageInBubble">#17d0bfbf</color>
     <color name="messageOutBubble">#ffffff</color>
     <color name="ChatPrimary">#00ff00</color>
-    <color name="primary_material_dark">#3c42f1</color>
+    <color name="primary_material_dark">#0107b3</color>
     <color name="colorBackground">#67fbd9</color>
     <color name="message_input">#bdf5bd</color>
     <color name="accent_material_light">#060eec</color>
@@ -15,4 +15,5 @@
     <color name="background_material_light">#ffffff</color>
     <color name="primary_text_material_dark">#d67676</color>
     <color name="chat_holder_default">#ffffff</color>
+    <color name="selected_message">#36735bf2</color>
 </resources>
