@@ -15,7 +15,6 @@
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
             android:animationCache="true"
-            android:clickable="true"
             android:elevation="30dp"
             app:cardCornerRadius="10dp"
             app:cardUseCompatPadding="true">
@@ -57,8 +56,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:background="@color/selected_message">
-
-    </FrameLayout>
+        android:background="@color/selected_message" />
 
 </FrameLayout>

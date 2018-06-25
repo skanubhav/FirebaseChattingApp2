@@ -425,7 +425,7 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        // databaseReference.removeEventListener(childEventListener);
+        databaseReference.removeEventListener(childEventListener);
         // userDBHelper.close();
         super.onDestroy();
     }
@@ -850,9 +850,11 @@ public class ChatActivity extends AppCompatActivity {
         else {
             if(new File(data.getPath()).length()<=26214400) {
                 String fileName = null;
+                String localName = null;
                 try {
                     String filePath = getPath(this, data);
-                    fileName = new Date().getTime() + " " +  filePath.substring(filePath.lastIndexOf("/")+1);
+                    localName = filePath.substring(filePath.lastIndexOf("/")+1);
+                    fileName = new Date().getTime() + " " +  localName;
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
@@ -860,7 +862,7 @@ public class ChatActivity extends AppCompatActivity {
                 Log.d("File Upload", fileName);
                 UploadTask uploadTask = UploadRef.putFile(data);
 
-                showNotification(uploadTask, contentType, data, this);
+                showNotification(uploadTask, contentType, data, this, localName);
             }
             else {
                 showToast("Files larger thar 25 MB cannot be uploaded");
@@ -871,11 +873,12 @@ public class ChatActivity extends AppCompatActivity {
     // SEND IMAGE
     private void compressAndSendImage (Uri data) throws IOException {
         byte[] bdata = compressImage(data);
-        String fileName = new Date().getTime() + getFileName(data) ;
+        String localName = getFileName(data);
+        String fileName = new Date().getTime() + localName;
         UploadRef = storageReference.child("Images").child(Sender.getUid()).child(Reciever.getUid()).child(fileName);
         UploadTask uploadTask = UploadRef.putBytes(bdata);
 
-        showNotification(uploadTask, ChatMessage.IMAGE, data, this);
+        showNotification(uploadTask, ChatMessage.IMAGE, data, this, localName);
     }
 
     private byte[] compressImage (Uri imageUri) throws IOException {
@@ -896,10 +899,10 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    private void showNotification(final UploadTask uploadTask, final int contentType, final Uri data, final Context context) {
+    private void showNotification(final UploadTask uploadTask, final int contentType, final Uri data, final Context context, String fileName) {
         final NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
         final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setContentTitle("Uploading File")
+                .setContentTitle("Uploading File: " + fileName)
                 .setContentText("Uploading...")
                 .setSmallIcon(R.drawable.ic_attach_file)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -1156,5 +1159,25 @@ public class ChatActivity extends AppCompatActivity {
                         contentType, thumbnailURL, null, null));
         message_input.setText("");
         mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
+
+        if(contentType==ChatMessage.TEXT)
+            sendNotification( data);
+        else if(contentType==ChatMessage.IMAGE)
+            sendNotification( "Image");
+        else if(contentType==ChatMessage.VIDEO)
+            sendNotification( "Video");
+        else if(contentType==ChatMessage.AUDIO)
+            sendNotification("Audio");
+        else if(contentType==ChatMessage.DOCUMENT)
+            sendNotification("Document");
+    }
+
+    private void sendNotification(String data) {
+        NotificationRequest notificationRequest = new NotificationRequest(Reciever.getUid(), data, Sender.getUser());
+
+        FirebaseDatabase.getInstance()
+                .getReference("Notifications")
+                .push()
+                .setValue(notificationRequest);
     }
 }

@@ -58,6 +58,7 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
     @Override
     public void onBindViewHolder(@NonNull final userHolder holder,final int position) {
         if(Sender!=null) {
+
             setText(holder, position);
 
             setImage(holder, position);
@@ -65,12 +66,12 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
             setListener(holder, UserList.get(position));
 
             AsyncTask task = new AsyncTask() {
-                @Override
-                protected Object doInBackground(Object[] objects) {
-                    setFirebaseDatabaseListener(position, UserList.get(position), holder.user.getContext());
-                    return null;
-                }
-            };
+                    @Override
+                    protected Object doInBackground(Object[] objects) {
+                        setFirebaseDatabaseListener(position, UserList.get(position), holder.user.getContext());
+                        return null;
+                    }
+                };
             task.execute();
         }
     }
@@ -165,20 +166,21 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<userHolder>  {
         holder.user_card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                {
-                    Intent intent = new Intent(holder.user.getContext(), ChatActivity.class);
-
-                    intent.putExtra("SenderID", Sender.getUid());
-                    intent.putExtra("SenderName", Sender.getUser());
-                    intent.putExtra("SenderPhoto", Sender.getProfilePictureURL());
-                    intent.putExtra("RecieverID", Reciever.getUid());
-                    intent.putExtra("RecieverName", Reciever.getUser());
-                    intent.putExtra("RecieverPhoto", Reciever.getProfilePictureURL());
-
-                    holder.user.getContext().startActivity(intent);
-                }
+                    startChat(holder, Reciever);
             }
         });
 
+    }
+
+    private void startChat(userHolder holder, User Reciever) {
+        Intent intent = new Intent(holder.user.getContext(), ChatActivity.class);
+        intent.putExtra("SenderID", Sender.getUid());
+        intent.putExtra("SenderName", Sender.getUser());
+        intent.putExtra("SenderPhoto", Sender.getProfilePictureURL());
+        intent.putExtra("RecieverID", Reciever.getUid());
+        intent.putExtra("RecieverName", Reciever.getUser());
+        intent.putExtra("RecieverPhoto", Reciever.getProfilePictureURL());
+
+        holder.user.getContext().startActivity(intent);
     }
 }
