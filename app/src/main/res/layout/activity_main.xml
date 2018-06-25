@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".UserActivityPackage.MainActivity">
 
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list_of_users"
         android:layout_width="match_parent"

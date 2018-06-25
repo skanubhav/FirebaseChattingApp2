@@ -222,13 +222,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                                 values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL, downloadFile.getAbsolutePath());
 
                                 ChatList.get(position).setLocalMediaURL(downloadFile.getAbsolutePath());
-                                notifyDataSetChanged();
+                                holder.message_download_progress.setVisibility(View.GONE);
 
                                 sqLiteDatabase.update(CHAT_TABLE_NAME,
                                         values,
                                         MessagingContract.ChatDatabase.MESSAGE_TIME + "=?",
                                         new String[]{String.valueOf(model.getMessageTime())});
-                                holder.message_download_progress.setVisibility(View.GONE);
+                                notifyItemChanged(position);
                             }
                         });
                     }
@@ -298,7 +298,6 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
                 holder.audio_name.setVisibility(View.VISIBLE);
 
                 holder.audio_name.setText("Play Audio: " + audioURI.getLastPathSegment());
-                holder.audio_play.setVisibility(View.GONE);
                 holder.start_audio.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -341,6 +340,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
             @Override
             public void onViewDetachedFromWindow(View v) {
                 if(player!=null) {
+                    holder.audio_play.setVisibility(View.GONE);
                     player.stop();
                 }
             }
@@ -351,8 +351,26 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         final Uri uri = Uri.parse(model.getLocalMediaURL());
         final String fileName = uri.getLastPathSegment();
         holder.message_document.setVisibility(View.VISIBLE);
-        holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_attach_document));
+
+        if (fileName.contains(".doc") || fileName.contains(".docx")) {
+            holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_doc_file));
+        }
+        else if(fileName.contains(".pdf")) {
+            holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_pdf_file));
+        }
+        else if(fileName.contains(".ppt") || fileName.contains(".pptx")) {
+            holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_ppt_file));
+        }
+        else if(fileName.contains(".xls") || fileName.contains(".xlsx")) {
+            holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_excel_file));
+        }
+        else {
+            holder.message_document.setBackground(context.getResources().getDrawable(R.drawable.ic_attach_document));
+        }
+
+
         holder.message_document_name.setText(fileName);
+
         holder.message_document.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

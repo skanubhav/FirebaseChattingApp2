@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -18,8 +19,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
 import com.anubhav.firebasechattingapp2.UserDBHelper;
@@ -126,6 +129,12 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
                 actionBar.setTitle("Welcome " + user.getUser());
+                ImageView imageView = new ImageView(this);
+               GlideApp.with(this)
+                        .asBitmap()
+                        .load(user.getProfilePictureURL())
+                       .into(imageView);
+                actionBar.setIcon(R.mipmap.default_profile_image);
                 initializeAdapter();
                 initializeCloudData();
                 initializeLocalData();
@@ -155,6 +164,13 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG)
                     .show();
             actionBar.setTitle("Welcome " + user.getUser());
+
+            ImageView imageView = new ImageView(this);
+            GlideApp.with(this)
+                    .asBitmap()
+                    .load(user.getProfilePictureURL())
+                    .into(imageView);
+            actionBar.setIcon(R.mipmap.default_profile_image);
             initializeAdapter();
             initializeCloudData();
             initializeLocalData();

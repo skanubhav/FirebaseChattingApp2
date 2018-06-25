@@ -216,7 +216,6 @@ public class ChatActivity extends AppCompatActivity {
         displayChatMessages();
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.addmedia,menu);
@@ -502,6 +501,13 @@ public class ChatActivity extends AppCompatActivity {
             super.onBackPressed();
     }
 
+    @Override
+    public boolean onSupportNavigateUp(){
+        finish();
+        return true;
+    }
+
+
     // CALLED AT START OF ACTIVITY
     private void initializeViews() {
         listOfMessages = findViewById(R.id.list_of_messages);
@@ -544,6 +550,7 @@ public class ChatActivity extends AppCompatActivity {
                 .child(Reciever.getUid());
 
         getSupportActionBar().setTitle(Reciever.getUser());
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private void setListeners() {

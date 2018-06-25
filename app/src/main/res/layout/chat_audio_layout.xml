@@ -12,7 +12,6 @@
             android:id="@+id/message_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:clickable="true"
             android:elevation="30dp"
             app:cardCornerRadius="10dp"
             app:cardUseCompatPadding="true">
@@ -28,7 +27,7 @@
                     android:id="@+id/message_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
+                    android:layout_marginStart="4dp"
                     android:layout_alignParentStart="true"
                     android:padding="4dp"
                     android:textColor="@color/messageText"
@@ -37,7 +36,7 @@
                 <com.google.android.exoplayer2.ui.PlayerView
                     android:id="@+id/audio_play"
                     android:layout_width="250dp"
-                    android:layout_height="100dp"
+                    android:layout_height="80dp"
                     android:layout_alignParentStart="true"
                     android:layout_below="@id/message_time"
                     android:visibility="gone"
@@ -50,17 +49,19 @@
                     android:id="@+id/start_audio"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginStart="3dp"
-                    android:layout_marginBottom="5dp"
                     android:src="@drawable/ic_play_audio"
                     android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:visibility="gone"
                     android:layout_below="@id/message_time"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:maxWidth="250dp"
+                    android:layout_centerVertical="true"
+                    android:maxWidth="200dp"
+                    android:visibility="gone"
+                    android:layout_marginTop="3dp"
                     android:id="@+id/audio_name"
                     android:layout_below="@id/message_time"
                     android:layout_toEndOf="@id/start_audio"/>
@@ -71,9 +72,9 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:layout_centerInParent="true"
-                    android:layout_marginTop="20dp"
                     android:elevation="8dp"
                     android:indeterminate="true"
+                    android:layout_below="@id/message_time"
                     android:visibility="gone"/>
 
                 <ImageView
@@ -81,6 +82,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/download_button"
                     android:src="@drawable/ic_download_file_dark"
+                    android:layout_below="@id/message_time"
                     android:layout_centerInParent="true"
                     android:visibility="gone"/>
 
