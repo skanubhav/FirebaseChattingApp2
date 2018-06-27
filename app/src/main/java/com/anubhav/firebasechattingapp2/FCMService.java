@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
 import com.anubhav.firebasechattingapp2.UserActivityPackage.MainActivity;
+import com.anubhav.firebasechattingapp2.UserActivityPackage.User;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -24,13 +25,25 @@ public class FCMService extends FirebaseMessagingService {
         Notification messages are only received here in onMessageReceived when the app is
         in the foreground. When the app is in the background an automatically generated notification is displayed. */
         String notificationTitle = null, notificationBody = null;
-        String dataTitle = null, dataMessage = null;
+        User Sender = null, Reciever = null;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d("FCM recieved", "Message data payload: " + remoteMessage.getData().get("message"));
-            dataTitle = remoteMessage.getData().get("title");
-            dataMessage = remoteMessage.getData().get("message");
+            Sender = new User(
+                    remoteMessage.getData().get("SenderName"),
+                    remoteMessage.getData().get("SenderID"),
+                    "",
+                    "",
+                    remoteMessage.getData().get("SenderDP")
+            );
+
+            Reciever = new User(
+                    remoteMessage.getData().get("RecieverName"),
+                    remoteMessage.getData().get("RecieverID"),
+                    "",
+                    "",
+                    remoteMessage.getData().get("RecieverDP")
+            );
         }
 
         // Check if message contains a notification payload.
@@ -42,22 +55,36 @@ public class FCMService extends FirebaseMessagingService {
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-       // sendNotification(notificationTitle, notificationBody, dataTitle, dataMessage);
+       sendNotification(notificationTitle, notificationBody, Sender, Reciever);
     }
 
     /**
      //     * Create and show a simple notification containing the received FCM message.
      //     */
-    private void sendNotification(String notificationTitle, String notificationBody, String dataTitle, String dataMessage) {
+    private void sendNotification(String notificationTitle, String notificationBody, User Reciever, User Sender) {
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Log.d("FCM Recieve",Sender.toString());
+        Log.d("FCM Recieve",Reciever.toString());
+
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("SenderID", Sender.getUid());
+        intent.putExtra("SenderName", Sender.getUser());
+        intent.putExtra("SenderPhoto", Sender.getProfilePictureURL());
+        intent.putExtra("RecieverID", Reciever.getUid());
+        intent.putExtra("RecieverName", Reciever.getUser());
+        intent.putExtra("RecieverPhoto", Reciever.getProfilePictureURL());
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder notificationBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(this)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationBody)
                 .setSmallIcon(R.mipmap.default_profile_image)
                 .setAutoCancel(true)
-                .setSound(defaultSoundUri);
+                .setSound(defaultSoundUri)
+                .setContentIntent(pendingIntent);
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

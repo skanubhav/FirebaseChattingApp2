@@ -105,8 +105,8 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isLoading = false;
 
     // Sender and Receiver Data
-    private User Sender;
-    private User Reciever;
+    public static User Sender = null;
+    public static User Reciever = null;
 
     // Storage reference for firebase
     private StorageReference storageReference;
@@ -742,6 +742,8 @@ public class ChatActivity extends AppCompatActivity {
                     NumberOfMessages++;
                     // mAdapter.notifyDataSetChanged();
                     mAdapter.notifyItemInserted(ChatList.size());
+                    if(mLayoutManager.findLastVisibleItemPosition()>=ChatList.size()-5)
+                        mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
                 }
                 NumberOfTableMessages = DatabaseUtils.queryNumEntries(database, CHAT_TABLE_NAME);
             }
@@ -808,6 +810,7 @@ public class ChatActivity extends AppCompatActivity {
 
         });
 
+
         listOfMessages.addOnItemTouchListener(new RecyclerTouchListener(this,
                 listOfMessages, new ClickListener() {
             @Override
@@ -838,6 +841,7 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         }));
+
         listOfMessages.getAdapter().notifyDataSetChanged();
     }
 
@@ -1173,7 +1177,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendNotification(String data) {
-        NotificationRequest notificationRequest = new NotificationRequest(Reciever.getUid(), data, Sender.getUser());
+        NotificationRequest notificationRequest = new NotificationRequest(Sender, data, Reciever);
 
         FirebaseDatabase.getInstance()
                 .getReference("Notifications")
