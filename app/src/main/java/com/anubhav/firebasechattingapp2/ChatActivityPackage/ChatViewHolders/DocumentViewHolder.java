@@ -11,6 +11,7 @@ public class DocumentViewHolder extends ChatHolder {
 
     public ImageButton message_document;
     public TextView message_document_name;
+
     public DocumentViewHolder(View view) {
         super(view);
         message_document = view.findViewById(R.id.message_document);

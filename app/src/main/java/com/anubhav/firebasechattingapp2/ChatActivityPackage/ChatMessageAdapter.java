@@ -1,24 +1,15 @@
 package com.anubhav.firebasechattingapp2.ChatActivityPackage;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ShareCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
@@ -40,26 +31,17 @@ import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatViewHolders.Vide
 import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
-import com.anubhav.firebasechattingapp2.UserActivityPackage.User;
 import com.anubhav.firebasechattingapp2.UserDBHelper;
-import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -94,29 +76,33 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
         ChatHolder chatHolder = null;
 
         switch (viewType) {
-            case ChatMessage.TEXT :
+            case ChatMessage.TEXT:
                 chatHolder = new TextViewHolder(
                         inflater.inflate(R.layout.chat_text_layout, parent, false));
                 break;
 
-            case ChatMessage.IMAGE :
+            case ChatMessage.IMAGE:
                 chatHolder = new ImageViewHolder(
                         inflater.inflate(R.layout.chat_image_layout, parent, false));
                 break;
 
-            case ChatMessage.VIDEO :
-                chatHolder =  new VideoViewHolder(
+            case ChatMessage.VIDEO:
+                chatHolder = new VideoViewHolder(
                         inflater.inflate(R.layout.chat_video_layout, parent, false));
                 break;
 
-            case ChatMessage.AUDIO :
+            case ChatMessage.AUDIO:
                 chatHolder = new AudioViewHolder(
                         inflater.inflate(R.layout.chat_audio_layout, parent, false));
                 break;
 
-            case ChatMessage.DOCUMENT :
+            case ChatMessage.DOCUMENT:
                 chatHolder = new DocumentViewHolder(
                         inflater.inflate(R.layout.chat_document_layout, parent, false));
+                break;
+            case ChatMessage.DATE_CHANGE:
+                chatHolder = new ChatHolder(
+                        inflater.inflate(R.layout.chat_new_message_tag, parent, false));
                 break;
         }
         return chatHolder;
@@ -124,51 +110,66 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull final ChatHolder holder, final int position) {
-        holder.message_time.setText(DateFormat.format("dd/MM/yyyy (HH:mm)",
-                ChatList.get(position).getMessageTime()));
 
-        if(ChatActivity.selectedPosition == position) {
-           holder.message_select.setVisibility(View.VISIBLE);
+        if (ChatList.get(position).getContentType() == ChatMessage.DATE_CHANGE) {
+            handleDateDivider(holder, ChatList.get(position));
         }
         else {
-           holder.message_select.setVisibility(View.GONE);
-        }
 
-        if (ChatList.get(position).getContentType()==ChatMessage.TEXT) {
-            handleTextMessage(((TextViewHolder) holder), ChatList.get(position));
-        }
-        else if(ChatList.get(position).getLocalMediaURL().equals("")) {
-            setDownloadListener(holder, ChatList.get(position), position);
-        }
-        else {
-            Log.d("ChatMessageAdapter",ChatList.get(position).getLocalMediaURL());
-            if(ChatList.get(position).getContentType()==ChatMessage.IMAGE) {
-                handleImageMessage(((ImageViewHolder) holder), ChatList.get(position));
-            }
-            else if(ChatList.get(position).getContentType()==ChatMessage.VIDEO){
-                handleVideoMessage(((VideoViewHolder) holder),ChatList.get(position), position);
-            }
-            else if(ChatList.get(position).getContentType()==ChatMessage.AUDIO){
-           try {
-                handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
-            }
-            catch (IOException e) { e.printStackTrace(); }
-            }
-            else if(ChatList.get(position).getContentType()==ChatMessage.DOCUMENT){
-               handleDocumentMessage(((DocumentViewHolder) holder),ChatList.get(position));
-            }
-        }
+            holder.message_time.setText(DateFormat.format("HH:mm",
+                    ChatList.get(position).getMessageTime()));
 
+            if (ChatActivity.selectedPosition == position && ChatActivity.selectedPosition>0) {
+                holder.message_select.setVisibility(View.VISIBLE);
+            } else {
+                holder.message_select.setVisibility(View.GONE);
+            }
+
+            if (ChatList.get(position).getContentType() == ChatMessage.TEXT) {
+                handleTextMessage(((TextViewHolder) holder), ChatList.get(position));
+            } else if (ChatList.get(position).getLocalMediaURL().equals("")) {
+                setDownloadListener(holder, ChatList.get(position), position);
+            } else {
+                Log.d("ChatMessageAdapter", ChatList.get(position).getLocalMediaURL());
+                if (ChatList.get(position).getContentType() == ChatMessage.IMAGE) {
+                    handleImageMessage(((ImageViewHolder) holder), ChatList.get(position));
+                } else if (ChatList.get(position).getContentType() == ChatMessage.VIDEO) {
+                    handleVideoMessage(((VideoViewHolder) holder), ChatList.get(position), position);
+                } else if (ChatList.get(position).getContentType() == ChatMessage.AUDIO) {
+                    try {
+                        handleAudioMessage(((AudioViewHolder) holder), ChatList.get(position));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else if (ChatList.get(position).getContentType() == ChatMessage.DOCUMENT) {
+                    handleDocumentMessage(((DocumentViewHolder) holder), ChatList.get(position));
+                }
+            }
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) holder.message_layout.getLayoutParams();
-        if(ChatList.get(position).getStatusOfMessage().equals(StatusOfMessage.OUT_MESSAGE)) {
+        if (ChatList.get(position).getStatusOfMessage().equals(StatusOfMessage.OUT_MESSAGE)) {
             holder.message_relativelayout.setBackgroundColor(holder.message_layout.getResources().getColor(R.color.messageOutBubble));
             layoutParams.gravity = GravityCompat.END;
-        }
-        else {
+        } else {
             holder.message_relativelayout.setBackgroundColor(holder.message_layout.getResources().getColor(R.color.messageInBubble));
             layoutParams.gravity = GravityCompat.START;
         }
         holder.message_layout.setLayoutParams(layoutParams);
+        }
+    }
+
+    private void handleDateDivider(ChatHolder holder, ChatMessage model) {
+        String messageDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                model.getMessageTime()));
+        String currentDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                new Date().getTime()));
+        String messageText = null;
+        if(messageDate.equals(currentDate)) {
+            messageText = "Today";
+        }
+        else {
+            messageText = messageDate;
+        }
+        holder.message_time.setText(messageText);
     }
 
     private void setDownloadListener(final ChatHolder holder, final ChatMessage model, final int position) {

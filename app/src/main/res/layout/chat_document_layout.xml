@@ -28,10 +28,12 @@
                     android:id="@+id/message_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:padding="4dp"
-                    android:textColor="@color/messageText"
-                    android:textStyle="normal|bold" />
+                    android:layout_alignEnd="@id/messages_document_name"
+                    android:layout_marginEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/messageText" />
 
                 <TextView
                     android:id="@+id/messages_document_name"
@@ -68,7 +70,8 @@
                     android:layout_centerInParent="true"
                     android:layout_below="@id/message_time"
                     android:src="@drawable/ic_download_file_dark"
-                    android:visibility="gone"/>
+                    android:visibility="gone"
+                    android:padding="20dp"/>
             </RelativeLayout>
 
         </android.support.v7.widget.CardView>

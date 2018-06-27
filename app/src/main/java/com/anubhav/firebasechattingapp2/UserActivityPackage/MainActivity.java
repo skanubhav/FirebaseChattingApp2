@@ -22,6 +22,7 @@ import android.view.animation.LayoutAnimationController;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
 import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
@@ -61,6 +62,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+    Intent notificationIntent = getIntent();
+
+    if(notificationIntent.getStringExtra("SenderID")!=null){
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("SenderID",notificationIntent.getStringExtra("RecieverID") );
+        intent.putExtra("SenderName",notificationIntent.getStringExtra("RecieverName"));
+        intent.putExtra("SenderPhoto",notificationIntent.getStringExtra("RecieverDP"));
+        intent.putExtra("RecieverID", notificationIntent.getStringExtra("SenderID"));
+        intent.putExtra("RecieverName",notificationIntent.getStringExtra("SenderName") );
+        intent.putExtra("RecieverPhoto",notificationIntent.getStringExtra("SenderDP"));
+        startActivity(intent);
+    }
     initialize();
     displayUsers();
     signIn();

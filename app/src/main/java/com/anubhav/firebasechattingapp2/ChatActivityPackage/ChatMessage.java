@@ -7,6 +7,7 @@ public class ChatMessage {
     public final static int VIDEO = 2;
     public final static int AUDIO = 3;
     public final static int DOCUMENT = 4;
+    public final static int DATE_CHANGE=6;
 
     private String messageText;
     private String messageSender;

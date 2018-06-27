@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -57,6 +56,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -67,7 +67,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -100,7 +99,7 @@ public class ChatActivity extends AppCompatActivity {
     private ChildEventListener childEventListener;
     private SQLiteDatabase database;
 
-    private long NumberOfMessages = 20;
+    private long NumberOfMessages = 15;
     private long NumberOfTableMessages;
     private boolean isLoading = false;
 
@@ -400,7 +399,7 @@ public class ChatActivity extends AppCompatActivity {
                                 data.getStringExtra("Reciever Photo")
                         ));
                 ChatList.clear();
-                NumberOfMessages = 20;
+                NumberOfMessages = 15;
                 initializeAdapter();
                 initializeLocalData();
                 initializeCloudData();
@@ -427,8 +426,11 @@ public class ChatActivity extends AppCompatActivity {
     protected void onDestroy() {
         databaseReference.removeEventListener(childEventListener);
         // userDBHelper.close();
+        Reciever=null;
+        selectedPosition = -1;
         super.onDestroy();
     }
+
 
     @Override
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
@@ -555,94 +557,103 @@ public class ChatActivity extends AppCompatActivity {
 
     private void setListeners() {
 
-        fab.setOnClickListener(new View.OnClickListener() {
+        AsyncTask asyncTask = new AsyncTask() {
             @Override
-            public void onClick(View view) {
-                if(message_input.getText().toString().equals("")) {
-                    showToast("Input cannot be empty");
-                }
-                else {
-                    sendData(message_input.getText().toString(),ChatMessage.TEXT, null, "");
-                }
+            protected Object doInBackground(Object[] objects) {
+                fab.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if(message_input.getText().toString().equals("")) {
+                            showToast("Input cannot be empty");
+                        }
+                        else {
+                            sendData(message_input.getText().toString(),ChatMessage.TEXT, null, "");
+                        }
+                    }
+                });
+
+                attachCard.findViewById(R.id.attach_image)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                launchGalleryImage();
+                            }
+                        });
+                attachCard.findViewById(R.id.attach_camera)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                launchCamera();
+                            }
+                        });
+                attachCard.findViewById(R.id.attach_video)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                launchGalleryVideo();
+                            }
+                        });
+                attachCard.findViewById(R.id.attach_audio)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                launchGalleryAudio();
+                            }
+                        });
+                attachCard.findViewById(R.id.attach_document)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                launchAttachDocument();
+                            }
+                        });
+
+                attachFrameLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(attachFrameLayout.getVisibility()==View.VISIBLE){
+                            int cx = attachCard.getWidth()/2;
+                            int cy = attachCard.getHeight()/2;
+                            float radius = (float) Math.hypot(cx, cy);
+                            Animator animator = ViewAnimationUtils.createCircularReveal(
+                                    attachCard,
+                                    cx,
+                                    cy,
+                                    radius,
+                                    0
+                            );
+                            animator.addListener(new Animator.AnimatorListener() {
+                                @Override
+                                public void onAnimationStart(Animator animation) {
+
+                                }
+
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    attachFrameLayout.setVisibility(View.GONE);
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+
+                                }
+
+                                @Override
+                                public void onAnimationRepeat(Animator animation) {
+
+                                }
+                            });
+
+                            animator.start();
+                        }
+                    }
+                });
+                return null;
             }
-        });
+        };
 
-        attachCard.findViewById(R.id.attach_image)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryImage();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_camera)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchCamera();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_video)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryVideo();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_audio)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchGalleryAudio();
-                    }
-                });
-        attachCard.findViewById(R.id.attach_document)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchAttachDocument();
-                    }
-                });
+        asyncTask.execute();
 
-        attachFrameLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(attachFrameLayout.getVisibility()==View.VISIBLE){
-                    int cx = attachCard.getWidth()/2;
-                    int cy = attachCard.getHeight()/2;
-                    float radius = (float) Math.hypot(cx, cy);
-                    Animator animator = ViewAnimationUtils.createCircularReveal(
-                            attachCard,
-                            cx,
-                            cy,
-                            radius,
-                            0
-                    );
-                    animator.addListener(new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            attachFrameLayout.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
-
-                    animator.start();
-                }
-            }
-        });
 
 
     }
@@ -687,6 +698,10 @@ public class ChatActivity extends AppCompatActivity {
                 String.valueOf(NumberOfMessages)
         );
 
+        if(ChatList.size()>0) {
+            ChatList.remove(0);
+        }
+
         while (cursor.moveToNext()) {
             String message = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_TEXT));
             String Sender = cursor.getString(cursor.getColumnIndexOrThrow(MessagingContract.ChatDatabase.MESSAGE_SENDER));
@@ -704,16 +719,56 @@ public class ChatActivity extends AppCompatActivity {
             }
             else if(ChatList.size()>0) {
                 if(ChatList.get(0).getMessageTime() > newMessage.getMessageTime()){
+                    String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            ChatList.get(0).getMessageTime()));
+                    String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            newMessage.getMessageTime()));
+                    Log.d("LocalDate","Old Date: " + OldDate);
+                    Log.d("LocalDate","New Date: " + NewDate) ;
+
+                    if(!OldDate.equals(NewDate)) {
+                        Log.d("LocalDateUpdate",OldDate);
+                        ChatList.add(0,new ChatMessage(
+                                null,
+                                null,
+                                null,
+                                ChatList.get(0).getMessageTime(),
+                                null,
+                                ChatMessage.DATE_CHANGE,
+                                null,
+                                null,
+                                null
+                        ));
+                    }
                     ChatList.add(0,newMessage);
                     mAdapter.notifyItemInserted(0);
                 }
             }
         }
+        if(ChatList.size()>0) {
+            ChatList.add(0,new ChatMessage(
+                    null,
+                    null,
+                    null,
+                    ChatList.get(0).getMessageTime(),
+                    null,
+                    ChatMessage.DATE_CHANGE,
+                    null,
+                    null,
+                    null
+            ));
+        }
     }
 
     private void initializeCloudData() {
-
-        childEventListener = databaseReference.addChildEventListener(new ChildEventListener() {
+        Query query;
+        if(ChatList.size()>0){
+            query = databaseReference.orderByKey().startAt(String.valueOf(ChatList.get(ChatList.size()-1).getMessageTime()));
+        }
+        else {
+            query = databaseReference.orderByKey();
+        }
+       childEventListener = query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 String message = dataSnapshot.getValue(ChatMessage.class).getMessageText();
@@ -723,6 +778,7 @@ public class ChatActivity extends AppCompatActivity {
                 StatusOfMessage Status = dataSnapshot.getValue(ChatMessage.class).getStatusOfMessage();
                 int ContentType = dataSnapshot.getValue(ChatMessage.class).getContentType();
                 String Thumbnail = dataSnapshot.getValue(ChatMessage.class).getThumbnailURL();
+                Log.d("CloudData", Sender + message + Reciever);
 
                 if (!CheckIsInDBorNot(Time)) {
                     ContentValues values = new ContentValues();
@@ -735,12 +791,33 @@ public class ChatActivity extends AppCompatActivity {
                     values.put(MessagingContract.ChatDatabase.MESSAGE_THUMBNAIL, Thumbnail);
                     values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_URL,"");
                     values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL,"");
+
                     database.insert(CHAT_TABLE_NAME, null, values);
 
+                    if(ChatList.size()>0) {
+                    String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            ChatList.get(ChatList.size()-1).getMessageTime()));
+                    String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            Time));
+                    Log.d("CloudDate","Old Date: " + OldDate);
+                    Log.d("CloudDate","New Date: " + NewDate);
+                    if(!OldDate.equals(NewDate)) {
+                        ChatList.add(0, new ChatMessage(
+                                null,
+                                null,
+                                null,
+                                Time,
+                                null,
+                                ChatMessage.DATE_CHANGE,
+                                null,
+                                null,
+                                null
+                        ));
+                    }
+                    }
                     ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType,
                             Thumbnail, "", ""));
                     NumberOfMessages++;
-                    // mAdapter.notifyDataSetChanged();
                     mAdapter.notifyItemInserted(ChatList.size());
                     if(mLayoutManager.findLastVisibleItemPosition()>=ChatList.size()-5)
                         mLayoutManager.smoothScrollToPosition(listOfMessages, null, ChatList.size());
@@ -772,7 +849,6 @@ public class ChatActivity extends AppCompatActivity {
 
     private void displayChatMessages() {
         listOfMessages.setAdapter(mAdapter);
-
         listOfMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -783,7 +859,7 @@ public class ChatActivity extends AppCompatActivity {
                         isLoading = true;
                         final long OldNumber = NumberOfMessages;
                         Log.d("ScrollOld", String.valueOf(NumberOfMessages));
-                        NumberOfMessages +=20;
+                        NumberOfMessages +=15;
                         if(NumberOfMessages>=NumberOfTableMessages) {
                             NumberOfMessages = NumberOfTableMessages;
                         }
@@ -796,8 +872,11 @@ public class ChatActivity extends AppCompatActivity {
                                     public void run() {
                                         initializeLocalData();
                                         chat_loading.setVisibility(View.GONE);
-                                        if(OldNumber!= NumberOfTableMessages)
+                                        if(OldNumber!= NumberOfTableMessages) {
                                             mLayoutManager.scrollToPosition(Integer.parseInt(String.valueOf(NumberOfMessages-OldNumber-1)));
+                                            if(mode == SELECT_MODE)
+                                                selectedPosition+=NumberOfMessages-OldNumber;
+                                        }
                                     }
                                 }
                         , 1500);
@@ -810,34 +889,37 @@ public class ChatActivity extends AppCompatActivity {
 
         });
 
-
         listOfMessages.addOnItemTouchListener(new RecyclerTouchListener(this,
                 listOfMessages, new ClickListener() {
             @Override
             public void onClick(View view, int position) {
-                if(mode==SELECT_MODE) {
-                    if(selectedPosition == position) {
-                        invalidateOptionsMenu();
-                        selectedPosition = -1;
-                        mode = CHAT_MODE;
-                    }
-                    else{
-                        if(ChatList.get(selectedPosition).getContentType() != ChatList.get(position).getContentType())
+                if(mode==SELECT_MODE & selectedPosition>0) {
+                    if(ChatList.get(position).getContentType()!=ChatMessage.DATE_CHANGE) {
+                        if(selectedPosition == position) {
                             invalidateOptionsMenu();
-                        selectedPosition = position;
+                            selectedPosition = -1;
+                            mode = CHAT_MODE;
+                        }
+                        else{
+                            if(ChatList.get(selectedPosition).getContentType() != ChatList.get(position).getContentType())
+                                invalidateOptionsMenu();
+                            selectedPosition = position;
+                        }
+                        mAdapter.notifyDataSetChanged();
                     }
-                    mAdapter.notifyDataSetChanged();
                 }
             }
 
             @Override
             public void onLongClick(View view, int position) {
                 if(mode==CHAT_MODE) {
-                    invalidateOptionsMenu();
-                    mode = SELECT_MODE;
-                    selectedPosition = position;
-                    mAdapter.notifyDataSetChanged();;
-                    Log.d("Long Click", ChatList.get(position).getMessageText());
+                    if(ChatList.get(position).getContentType()!=ChatMessage.DATE_CHANGE) {
+                        invalidateOptionsMenu();
+                        mode = SELECT_MODE;
+                        selectedPosition = position;
+                        mAdapter.notifyDataSetChanged();;
+                        Log.d("Long Click", ChatList.get(position).getMessageText() + position);
+                    }
                 }
             }
         }));
@@ -1144,6 +1226,41 @@ public class ChatActivity extends AppCompatActivity {
         values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL,"");
         database.insert(CHAT_TABLE_NAME, null, values);
 
+        if(ChatList.size()>0) {
+            String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                    ChatList.get(ChatList.size()-1).getMessageTime()));
+            String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                    Time));
+            Log.d("CloudDate","Old Date: " + OldDate);
+            Log.d("CloudDate","New Date: " + NewDate);
+            if(!OldDate.equals(NewDate)) {
+                ChatList.add(0, new ChatMessage(
+                        null,
+                        null,
+                        null,
+                        Time,
+                        null,
+                        ChatMessage.DATE_CHANGE,
+                        null,
+                        null,
+                        null
+                ));
+            }
+        }
+        else if(ChatList.size()==0) {
+            ChatList.add(0, new ChatMessage(
+                    null,
+                    null,
+                    null,
+                    Time,
+                    null,
+                    ChatMessage.DATE_CHANGE,
+                    null,
+                    null,
+                    null
+            ));
+        }
+
         ChatList.add(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE,
                 contentType, thumbnailURL, localMediaURL, ""));
         NumberOfMessages++;
@@ -1152,13 +1269,13 @@ public class ChatActivity extends AppCompatActivity {
         FirebaseDatabase.getInstance().getReference("Chats")
                 .child(Sender.getUid())
                 .child(Reciever.getUid())
-                .child(String.valueOf(new Date().getTime()))
+                .child(String.valueOf(Time))
                 .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE,
                         contentType, thumbnailURL, null, null));
         FirebaseDatabase.getInstance().getReference("Chats")
                 .child(Reciever.getUid())
                 .child(Sender.getUid())
-                .child(String.valueOf(new Date().getTime()))
+                .child(String.valueOf(Time))
                 .setValue(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.IN_MESSAGE,
                         contentType, thumbnailURL, null, null));
         message_input.setText("");

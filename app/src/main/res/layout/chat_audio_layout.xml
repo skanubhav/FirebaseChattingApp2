@@ -28,63 +28,71 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:layout_alignParentStart="true"
-                    android:padding="4dp"
-                    android:textColor="@color/messageText"
-                    android:textStyle="normal|bold" />
+                    android:layout_alignEnd="@id/message_play_layout"
+                    android:layout_marginEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/messageText" />
 
-                <com.google.android.exoplayer2.ui.PlayerView
-                    android:id="@+id/audio_play"
-                    android:layout_width="250dp"
-                    android:layout_height="80dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@id/message_time"
-                    android:visibility="gone"
-                    app:shutter_background_color="@color/fui_transparent">
-
-                </com.google.android.exoplayer2.ui.PlayerView>
-
-                <de.hdodenhof.circleimageview.CircleImageView
-                    xmlns:app="http://schemas.android.com/apk/res-auto"
-                    android:id="@+id/start_audio"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:src="@drawable/ic_play_audio"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:visibility="gone"
-                    android:layout_below="@id/message_time"/>
-
-                <TextView
+                <RelativeLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:maxWidth="200dp"
-                    android:visibility="gone"
-                    android:layout_marginTop="3dp"
-                    android:id="@+id/audio_name"
-                    android:layout_below="@id/message_time"
-                    android:layout_toEndOf="@id/start_audio"/>
+                    android:id="@+id/message_play_layout"
+                    android:layout_below="@id/message_time">
 
-                <ProgressBar
-                    android:id="@+id/download_progress"
-                    style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_centerInParent="true"
-                    android:elevation="8dp"
-                    android:indeterminate="true"
-                    android:layout_below="@id/message_time"
-                    android:visibility="gone"/>
+                    <com.google.android.exoplayer2.ui.PlayerView
+                        android:id="@+id/audio_play"
+                        android:layout_width="250dp"
+                        android:layout_height="80dp"
+                        android:layout_alignParentStart="true"
+                        android:visibility="gone"
+                        app:shutter_background_color="@color/fui_transparent">
 
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/download_button"
-                    android:src="@drawable/ic_download_file_dark"
-                    android:layout_below="@id/message_time"
-                    android:layout_centerInParent="true"
-                    android:visibility="gone"/>
+                    </com.google.android.exoplayer2.ui.PlayerView>
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        xmlns:app="http://schemas.android.com/apk/res-auto"
+                        android:id="@+id/start_audio"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/ic_play_audio"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:maxWidth="200dp"
+                        android:visibility="gone"
+                        android:layout_marginTop="3dp"
+                        android:id="@+id/audio_name"
+                        android:layout_toEndOf="@id/start_audio"/>
+
+                    <ProgressBar
+                        android:id="@+id/download_progress"
+                        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_centerInParent="true"
+                        android:elevation="8dp"
+                        android:indeterminate="true"
+                        android:visibility="gone"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/download_button"
+                        android:src="@drawable/ic_download_file_dark"
+                        android:layout_centerInParent="true"
+                        android:visibility="gone"
+                        android:padding="20dp"/>
+
+
+                </RelativeLayout>
+
 
             </RelativeLayout>
 
