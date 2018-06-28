@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
                                     SIGN_IN_REQUEST_CODE);
                             SQLiteDatabase database = userDBHelper.getWritableDatabase();
                             database.execSQL("delete from " + MessagingContract.UserDatabase.TABLE_NAME);
+                            FirebaseMessaging.getInstance().unsubscribeFromTopic("user_" + user.getUid());
                             UserList.clear();
                         }
                     });
@@ -155,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
                 initializeAdapter();
                 initializeCloudData();
                 initializeLocalData();
-                setItemTouchListener();
             }
             else {
                 Toast.makeText(this,
@@ -242,7 +242,6 @@ public class MainActivity extends AppCompatActivity {
             initializeAdapter();
             initializeCloudData();
             initializeLocalData();
-            setItemTouchListener();
         }
     }
 
@@ -273,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
 
         mAdapter.notifyDataSetChanged();
         listOfUsers.addItemDecoration(dividerItemDecoration);
+        setItemTouchListener();
     }
 
     private void initializeAdapter() {

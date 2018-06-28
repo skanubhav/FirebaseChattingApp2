@@ -1256,7 +1256,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.d("CloudDate","Old Date: " + OldDate);
             Log.d("CloudDate","New Date: " + NewDate);
             if(!OldDate.equals(NewDate)) {
-                ChatList.add(0, new ChatMessage(
+                ChatList.add(new ChatMessage(
                         null,
                         null,
                         null,
@@ -1283,6 +1283,7 @@ public class ChatActivity extends AppCompatActivity {
                     null
             ));
         }
+
 
         ChatList.add(new ChatMessage(data, Sender.getUser(), Reciever.getUser(), Time, StatusOfMessage.OUT_MESSAGE,
                 contentType, thumbnailURL, localMediaURL, ""));
