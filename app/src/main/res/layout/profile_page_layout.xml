@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
-            android:src="@android:drawable/ic_menu_camera" />
+            android:src="@drawable/ic_menu_camera" />
 
     </RelativeLayout>
 

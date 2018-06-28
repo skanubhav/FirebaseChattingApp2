@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ChatActivityPackage.ChatActivity">
+    tools:context=".ChatActivityPackage.ChatActivity"
+    android:background="@color/chat_background">
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -27,12 +28,12 @@
         android:layout_marginBottom="3dp"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
-        android:paddingTop="1dp"
         android:layout_toLeftOf="@id/fab"
         android:background="@drawable/message_input"
         android:baselineAligned="true"
         android:paddingLeft="10dp"
-        android:paddingRight="10dp">
+        android:paddingRight="10dp"
+        android:paddingTop="2dp">
 
         <EditText
             android:id="@+id/message_input"
@@ -46,7 +47,7 @@
         android:layout_height="match_parent"
         android:layout_above="@id/input_layout"
         android:layout_alignParentTop="true"
-        android:layout_marginBottom="15dp"
+        android:layout_marginBottom="5dp"
         android:fadingEdge="horizontal">
 
         <ProgressBar
@@ -71,7 +72,6 @@
         </android.support.v7.widget.RecyclerView>
 
     </FrameLayout>
-
 
     <FrameLayout
         android:id="@+id/attach_activity_layout"

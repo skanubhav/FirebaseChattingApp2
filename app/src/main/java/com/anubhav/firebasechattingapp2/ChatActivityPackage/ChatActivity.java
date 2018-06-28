@@ -100,6 +100,7 @@ public class ChatActivity extends AppCompatActivity {
     private SQLiteDatabase database;
 
     private long NumberOfMessages = 15;
+    private int NumberOfDateDividers;
     private long NumberOfTableMessages;
     private boolean isLoading = false;
 
@@ -190,6 +191,7 @@ public class ChatActivity extends AppCompatActivity {
 
         storageReference = FirebaseStorage.getInstance().getReference();
         ChatList = new ArrayList<>();
+        NumberOfDateDividers = 0;
         Intent intent = getIntent();
 
         initializeViews();
@@ -222,6 +224,7 @@ public class ChatActivity extends AppCompatActivity {
             menu.findItem(R.id.attach_file).setVisible(true);
             menu.findItem(R.id.forward_message).setVisible(false);
             menu.findItem(R.id.copy_text).setVisible(false);
+          //  menu.findItem(R.id.share).setVisible(false);
         }
         else if(mode == SELECT_MODE) {
             menu.findItem(R.id.attach_file).setVisible(false);
@@ -229,10 +232,13 @@ public class ChatActivity extends AppCompatActivity {
             if(selectedPosition !=-1) {
                 if(ChatList.get(selectedPosition).getContentType() == ChatMessage.TEXT) {
                     menu.findItem(R.id.copy_text).setVisible(true);
+                    //menu.findItem(R.id.share).setVisible(false);
                 }
                 else {
                     if(ChatList.get(selectedPosition).getLocalMediaURL().equals(""))
                         menu.findItem(R.id.forward_message).setVisible(false);
+                    else
+                       // menu.findItem(R.id.share).setVisible(true);
                     menu.findItem(R.id.copy_text).setVisible(false);
                 }
             }
@@ -699,6 +705,7 @@ public class ChatActivity extends AppCompatActivity {
         );
 
         if(ChatList.size()>0) {
+            NumberOfDateDividers--;
             ChatList.remove(0);
         }
 
@@ -727,6 +734,7 @@ public class ChatActivity extends AppCompatActivity {
                     Log.d("LocalDate","New Date: " + NewDate) ;
 
                     if(!OldDate.equals(NewDate)) {
+                        NumberOfDateDividers++;
                         Log.d("LocalDateUpdate",OldDate);
                         ChatList.add(0,new ChatMessage(
                                 null,
@@ -746,6 +754,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
         if(ChatList.size()>0) {
+            NumberOfDateDividers++;
             ChatList.add(0,new ChatMessage(
                     null,
                     null,
@@ -802,6 +811,7 @@ public class ChatActivity extends AppCompatActivity {
                     Log.d("CloudDate","Old Date: " + OldDate);
                     Log.d("CloudDate","New Date: " + NewDate);
                     if(!OldDate.equals(NewDate)) {
+                        NumberOfDateDividers++;
                         ChatList.add(0, new ChatMessage(
                                 null,
                                 null,
@@ -849,46 +859,12 @@ public class ChatActivity extends AppCompatActivity {
 
     private void displayChatMessages() {
         listOfMessages.setAdapter(mAdapter);
-        listOfMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        setRecyclerScrollListener();
+        setItemTouchListener();
+        listOfMessages.getAdapter().notifyDataSetChanged();
+    }
 
-                if (!recyclerView.canScrollVertically(-1)) {
-                    Log.d("Loading", String.valueOf(isLoading));
-                    if(!isLoading) {
-                        isLoading = true;
-                        final long OldNumber = NumberOfMessages;
-                        Log.d("ScrollOld", String.valueOf(NumberOfMessages));
-                        NumberOfMessages +=15;
-                        if(NumberOfMessages>=NumberOfTableMessages) {
-                            NumberOfMessages = NumberOfTableMessages;
-                        }
-                        Log.d("ScrollNew", String.valueOf(NumberOfMessages));
-                        if(OldNumber < NumberOfTableMessages)
-                            chat_loading.setVisibility(View.VISIBLE);
-                        new Handler().postDelayed(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        initializeLocalData();
-                                        chat_loading.setVisibility(View.GONE);
-                                        if(OldNumber!= NumberOfTableMessages) {
-                                            mLayoutManager.scrollToPosition(Integer.parseInt(String.valueOf(NumberOfMessages-OldNumber-1)));
-                                            if(mode == SELECT_MODE)
-                                                selectedPosition+=NumberOfMessages-OldNumber;
-                                        }
-                                    }
-                                }
-                        , 1500);
-                        Log.d("ScrollTo",String.valueOf(NumberOfMessages-OldNumber));
-                    }
-                    isLoading = false;
-                    super.onScrolled(recyclerView, dx, dy);
-                }
-            }
-
-        });
-
+    private void setItemTouchListener() {
         listOfMessages.addOnItemTouchListener(new RecyclerTouchListener(this,
                 listOfMessages, new ClickListener() {
             @Override
@@ -924,7 +900,52 @@ public class ChatActivity extends AppCompatActivity {
             }
         }));
 
-        listOfMessages.getAdapter().notifyDataSetChanged();
+    }
+
+    private void setRecyclerScrollListener() {
+        listOfMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+
+                if (!recyclerView.canScrollVertically(-1)) {
+                    Log.d("Loading", String.valueOf(isLoading));
+                    if(!isLoading) {
+                        isLoading = true;
+                        final long OldNumber = NumberOfMessages;
+                        final int OldNumberOfDateDividers = NumberOfDateDividers;
+                        Log.d("ScrollOld", String.valueOf(NumberOfMessages+NumberOfDateDividers));
+                        NumberOfMessages +=15;
+                        if(NumberOfMessages>=NumberOfTableMessages) {
+                            NumberOfMessages = NumberOfTableMessages;
+                        }
+                        Log.d("ScrollNew", String.valueOf(NumberOfMessages));
+                        if(OldNumber < NumberOfTableMessages) {
+                            chat_loading.setVisibility(View.VISIBLE);
+                            new Handler().postDelayed(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            initializeLocalData();
+                                            chat_loading.setVisibility(View.GONE);
+                                            if(OldNumber!= NumberOfTableMessages) {
+                                                mLayoutManager.scrollToPosition(
+                                                        Integer.parseInt(String.valueOf(
+                                                                NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers)));
+                                                if(mode == SELECT_MODE)
+                                                    selectedPosition+=NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers;
+                                                Log.d("ScrollTo",String.valueOf(NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers));
+                                            }
+                                        }
+                                    }
+                                    , 1500);
+                        }
+                    }
+                    isLoading = false;
+                    super.onScrolled(recyclerView, dx, dy);
+                }
+            }
+
+        });
     }
 
 
@@ -1227,6 +1248,7 @@ public class ChatActivity extends AppCompatActivity {
         database.insert(CHAT_TABLE_NAME, null, values);
 
         if(ChatList.size()>0) {
+            NumberOfDateDividers++;
             String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
                     ChatList.get(ChatList.size()-1).getMessageTime()));
             String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
@@ -1248,6 +1270,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
         else if(ChatList.size()==0) {
+            NumberOfDateDividers++;
             ChatList.add(0, new ChatMessage(
                     null,
                     null,

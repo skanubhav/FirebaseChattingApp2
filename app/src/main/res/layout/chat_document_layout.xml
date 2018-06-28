@@ -42,6 +42,8 @@
                     android:layout_below="@+id/message_time"
                     android:layout_toRightOf="@id/message_document"
                     android:maxWidth="200dp"
+                    android:layout_marginTop="@dimen/message_text_margin"
+                    android:layout_marginEnd="@dimen/message_text_margin"
                     android:layout_centerVertical="true"/>
 
                 <ImageButton

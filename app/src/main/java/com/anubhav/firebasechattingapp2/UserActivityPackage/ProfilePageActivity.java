@@ -65,6 +65,7 @@ public class ProfilePageActivity extends AppCompatActivity {
     public static int EDIT_MODE = 1;
     public static int RC_TAKE_PICTURE = 10;
     private int  MODE = SHOW_MODE;;
+    private Intent intent;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,6 +106,7 @@ public class ProfilePageActivity extends AppCompatActivity {
     }
 
     private void initialize() {
+        intent = new Intent();
         uploadProgress = findViewById(R.id.profile_image_loading);
         userNameView = findViewById(R.id.profile_name);
         userEmailView = findViewById(R.id.profile_email);
@@ -144,7 +146,7 @@ public class ProfilePageActivity extends AppCompatActivity {
         editButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(MODE == SHOW_MODE){
+                if (MODE == SHOW_MODE) {
                     userNameView.setEnabled(true);
                     userEmailView.setEnabled(true);
                     userPasswordView.setEnabled(true);
@@ -152,43 +154,45 @@ public class ProfilePageActivity extends AppCompatActivity {
                     userEmail = userEmailView.getText().toString();
                     MODE = EDIT_MODE;
                 }
-
-                else if(MODE == EDIT_MODE) {
-                    if(!user.getUser().equals(userNameView.getText().toString())){
-                        UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder()
-                                .setDisplayName(userNameView.getText().toString())
-                                .build();
-                        firebaseUser.updateProfile(profileChangeRequest)
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                showToast("Display Name Changed");
-                                setDisabled();
-                            }
-                        });
-                        user.setUser(userNameView.getText().toString());
-                        FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
-
+                else if (MODE == EDIT_MODE) {
+                    if (!user.getUser().equals(userNameView.getText().toString())) {
+                        changeDisplayName();
                     }
-                    if(!userEmail.equals(userEmailView.getText().toString()) && !userPasswordView.getText().toString().equals("password")) {
+                    if (!userEmail.equals(userEmailView.getText().toString()) && !userPasswordView.getText().toString().equals("password")) {
                         reuthenticateAndChange("EMAILANDPASSWORD");
-                    }
-                    else {
-                        if(!userEmail.equals(userEmailView.getText().toString())) {
+                    } else {
+                        if (!userEmail.equals(userEmailView.getText().toString())) {
                             Log.d("ProfilePage", userEmailView.getText().toString());
-                            if(isEmailValid(userEmailView.getText().toString()))
+                            if (isEmailValid(userEmailView.getText().toString()))
                                 reuthenticateAndChange("EMAIL");
                             else
                                 showToast("E-Mail Invalid");
                         }
-
-                        if(!userPasswordView.getText().toString().equals("password")) {
+                        if (!userPasswordView.getText().toString().equals("password")) {
                             reuthenticateAndChange("PASSWORD");
                         }
                     }
                 }
             }
         });
+    }
+
+
+    private void changeDisplayName() {
+            UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder()
+                    .setDisplayName(userNameView.getText().toString())
+                    .build();
+            firebaseUser.updateProfile(profileChangeRequest)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            showToast("Display Name Changed");
+                            user.setUser(userNameView.getText().toString());
+                            FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
+                            setDisabled();
+                            setResult(RESULT_OK,intent);
+                        }
+                    });
     }
 
     public static boolean isEmailValid(String email) {
@@ -229,9 +233,8 @@ public class ProfilePageActivity extends AppCompatActivity {
                                             if(task.isSuccessful()) {
                                                 showToast("Email Changed");
                                                 setDisabled();
+                                                setResult(RESULT_OK,intent);
                                             }
-
-
                                         }
                                     });
                         }
@@ -243,6 +246,7 @@ public class ProfilePageActivity extends AppCompatActivity {
                                             if(task.isSuccessful()) {
                                                 showToast("Password Changed");
                                                 setDisabled();
+                                                setResult(RESULT_OK,intent);
                                             }
 
                                         }
@@ -255,6 +259,7 @@ public class ProfilePageActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if(task.isSuccessful())
                                                 showToast("Email Changed");
+                                            setResult(RESULT_OK,intent);
                                         }
                                     });
                             firebaseUser.updatePassword(userPasswordView.getText().toString())
@@ -317,6 +322,7 @@ public class ProfilePageActivity extends AppCompatActivity {
                                                     .into(userImage);
                                             uploadProgress.setVisibility(View.GONE);
                                             showToast("Profile Picture Changed");
+                                            setResult(RESULT_OK,intent);
                                         }
                                     });
                         }

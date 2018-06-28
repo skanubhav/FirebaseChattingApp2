@@ -67,7 +67,8 @@
                         android:layout_centerVertical="true"
                         android:maxWidth="200dp"
                         android:visibility="gone"
-                        android:layout_marginTop="3dp"
+                        android:layout_marginTop="@dimen/message_text_margin"
+                        android:layout_marginEnd="@dimen/message_text_margin"
                         android:id="@+id/audio_name"
                         android:layout_toEndOf="@id/start_audio"/>
 

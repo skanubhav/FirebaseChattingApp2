@@ -55,7 +55,7 @@
                         android:layout_height="100dp"
                         android:id="@+id/message_video_play"
                         android:visibility="gone"
-                        android:src="@drawable/ic_video_play"
+                        android:src="@mipmap/ic_video_play"
                         android:layout_centerInParent="true"/>
 
                     <ProgressBar

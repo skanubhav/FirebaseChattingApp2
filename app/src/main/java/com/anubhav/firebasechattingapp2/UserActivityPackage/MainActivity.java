@@ -1,12 +1,15 @@
 package com.anubhav.firebasechattingapp2.UserActivityPackage;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
@@ -15,18 +18,24 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatActivity;
+import com.anubhav.firebasechattingapp2.ChatActivityPackage.ChatMessage;
 import com.anubhav.firebasechattingapp2.GlideApp;
 import com.anubhav.firebasechattingapp2.MessagingContract;
 import com.anubhav.firebasechattingapp2.R;
 import com.anubhav.firebasechattingapp2.UserDBHelper;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -56,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private DividerItemDecoration dividerItemDecoration;
     private List<User> UserList;
     private UserDBHelper userDBHelper = new UserDBHelper(this);
+    public static int EDIT_PROFILE = 20;
 
 
     @Override
@@ -124,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(item.getItemId()==R.id.profile_page) {
             Intent intent =new Intent(MainActivity.this, ProfilePageActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, EDIT_PROFILE);
         }
 
         return super.onOptionsItemSelected(item);
@@ -138,20 +148,14 @@ public class MainActivity extends AppCompatActivity {
             if(resultCode==RESULT_OK)
             {
                 initializeUser();
+                FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
                 Toast.makeText(this,
                         "Successfully Signed in!",
                         Toast.LENGTH_LONG).show();
-                FirebaseDatabase.getInstance().getReference("Users").child(user.getUid()).setValue(user);
-                actionBar.setTitle("Welcome " + user.getUser());
-                ImageView imageView = new ImageView(this);
-               GlideApp.with(this)
-                        .asBitmap()
-                        .load(user.getProfilePictureURL())
-                       .into(imageView);
-                actionBar.setIcon(R.mipmap.default_profile_image);
                 initializeAdapter();
                 initializeCloudData();
                 initializeLocalData();
+                setItemTouchListener();
             }
             else {
                 Toast.makeText(this,
@@ -159,6 +163,63 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 finish();
             }
+        }
+        else if(requestCode==EDIT_PROFILE) {
+            if(resultCode==RESULT_OK) {
+                initializeUser();
+            }
+        }
+    }
+
+    public static interface ClickListener{
+        public void onClick(View view, int position);
+        public void onLongClick(View view,int position);
+    }
+    class RecyclerTouchListener implements RecyclerView.OnItemTouchListener{
+
+        private ChatActivity.ClickListener clicklistener;
+        private GestureDetector gestureDetector;
+
+        public RecyclerTouchListener(Context context, final RecyclerView recycleView, final ChatActivity.ClickListener clicklistener){
+
+            this.clicklistener=clicklistener;
+            gestureDetector=new GestureDetector(context,new GestureDetector.SimpleOnGestureListener(){
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    return true;
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    View child=recycleView.findChildViewUnder(e.getX(),e.getY());
+                    if(child!=null && clicklistener!=null){
+                        clicklistener.onLongClick(child,recycleView.getChildAdapterPosition(child));
+                    }
+                }
+            });
+        }
+
+        public RecyclerTouchListener(Context context, RecyclerView listOfUsers, ClickListener clickListener) {
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+            View child=rv.findChildViewUnder(e.getX(),e.getY());
+            if(child!=null && clicklistener!=null && gestureDetector.onTouchEvent(e)){
+                clicklistener.onClick(child,rv.getChildAdapterPosition(child));
+            }
+
+            return false;
+        }
+
+        @Override
+        public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+
+        }
+
+        @Override
+        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
         }
     }
 
@@ -174,20 +235,14 @@ public class MainActivity extends AppCompatActivity {
         else {
             initializeUser();
             Toast.makeText(this,
-                    "Welcome " + FirebaseAuth.getInstance().getCurrentUser().getDisplayName(),
+                    "Welcome " + user.getUser(),
                     Toast.LENGTH_LONG)
                     .show();
-            actionBar.setTitle("Welcome " + user.getUser());
 
-            ImageView imageView = new ImageView(this);
-            GlideApp.with(this)
-                    .asBitmap()
-                    .load(user.getProfilePictureURL())
-                    .into(imageView);
-            actionBar.setIcon(R.mipmap.default_profile_image);
             initializeAdapter();
             initializeCloudData();
             initializeLocalData();
+            setItemTouchListener();
         }
     }
 
@@ -223,6 +278,36 @@ public class MainActivity extends AppCompatActivity {
     private void initializeAdapter() {
         mAdapter = new UserRecyclerAdapter(UserList, user, this);
         listOfUsers.setAdapter(mAdapter);
+    }
+
+    private void setItemTouchListener() {
+        Log.d("OnClick", "Set Listener");
+
+        listOfUsers.addOnItemTouchListener(new RecyclerTouchListener(this,
+                listOfUsers, new ChatActivity.ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                Log.d("OnClick", UserList.get(position).getUser());
+                startChat(UserList.get(position));
+            }
+
+            @Override
+            public void onLongClick(View view, int position) {
+                Log.d("OnLongClick", UserList.get(position).getUser());
+            }
+        }));
+    }
+
+    private void startChat(User Reciever) {
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("SenderID", user.getUid());
+        intent.putExtra("SenderName", user.getUser());
+        intent.putExtra("SenderPhoto", user.getProfilePictureURL());
+        intent.putExtra("RecieverID", Reciever.getUid());
+        intent.putExtra("RecieverName", Reciever.getUser());
+        intent.putExtra("RecieverPhoto", Reciever.getProfilePictureURL());
+
+        startActivity(intent);
     }
 
     private void initializeLocalData() {
@@ -330,5 +415,6 @@ public class MainActivity extends AppCompatActivity {
                 "",
                 userPhoto == null? null : userPhoto.toString());
         FirebaseMessaging.getInstance().subscribeToTopic("user_" + user.getUid());
+        actionBar.setTitle(" Welcome " + user.getUser());
     }
 }
