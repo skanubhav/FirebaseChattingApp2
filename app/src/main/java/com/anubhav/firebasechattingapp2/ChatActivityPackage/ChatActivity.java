@@ -709,6 +709,7 @@ public class ChatActivity extends AppCompatActivity {
         if(ChatList.size()>0) {
             NumberOfDateDividers--;
             ChatList.remove(0);
+            mAdapter.notifyItemRemoved(0);
         }
 
         while (cursor.moveToNext()) {
@@ -749,6 +750,7 @@ public class ChatActivity extends AppCompatActivity {
                                 null,
                                 null
                         ));
+                        mAdapter.notifyItemInserted(0);
                     }
                     ChatList.add(0,newMessage);
                     mAdapter.notifyItemInserted(0);
@@ -768,6 +770,7 @@ public class ChatActivity extends AppCompatActivity {
                     null,
                     null
             ));
+            mAdapter.notifyItemInserted(0);
         }
     }
 
@@ -804,16 +807,7 @@ public class ChatActivity extends AppCompatActivity {
                     values.put(MessagingContract.ChatDatabase.MESSAGE_LOCAL_THUMBNAIL,"");
 
                     database.insert(CHAT_TABLE_NAME, null, values);
-
-                    if(ChatList.size()>0) {
-                    String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
-                            ChatList.get(ChatList.size()-1).getMessageTime()));
-                    String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
-                            Time));
-                    Log.d("CloudDate","Old Date: " + OldDate);
-                    Log.d("CloudDate","New Date: " + NewDate);
-                    if(!OldDate.equals(NewDate)) {
-                        NumberOfDateDividers++;
+                    if(ChatList.size()==0) {
                         ChatList.add(0, new ChatMessage(
                                 null,
                                 null,
@@ -825,6 +819,30 @@ public class ChatActivity extends AppCompatActivity {
                                 null,
                                 null
                         ));
+                        mAdapter.notifyItemInserted(0);
+                    }
+
+                    if(ChatList.size()>0) {
+                    String OldDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            ChatList.get(ChatList.size()-1).getMessageTime()));
+                    String NewDate = String.valueOf(DateFormat.format("dd/MM/yyyy",
+                            Time));
+                    Log.d("CloudDate","Old Date: " + OldDate);
+                    Log.d("CloudDate","New Date: " + NewDate);
+                    if(!OldDate.equals(NewDate)) {
+                        NumberOfDateDividers++;
+                        ChatList.add(new ChatMessage(
+                                null,
+                                null,
+                                null,
+                                Time,
+                                null,
+                                ChatMessage.DATE_CHANGE,
+                                null,
+                                null,
+                                null
+                        ));
+                        mAdapter.notifyItemInserted(ChatList.size());
                     }
                     }
                     ChatList.add(new ChatMessage(message, Sender, Reciever, Time, Status, ContentType,
@@ -930,9 +948,6 @@ public class ChatActivity extends AppCompatActivity {
                                             initializeLocalData();
                                             chat_loading.setVisibility(View.GONE);
                                             if(OldNumber!= NumberOfTableMessages) {
-                                                mLayoutManager.scrollToPosition(
-                                                        Integer.parseInt(String.valueOf(
-                                                                NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers)));
                                                 if(mode == SELECT_MODE)
                                                     selectedPosition+=NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers;
                                                 Log.d("ScrollTo",String.valueOf(NumberOfMessages+NumberOfDateDividers-OldNumber-OldNumberOfDateDividers));
