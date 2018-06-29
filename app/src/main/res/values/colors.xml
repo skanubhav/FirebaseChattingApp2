@@ -17,4 +17,5 @@
     <color name="chat_holder_default">#ffffff</color>
     <color name="date">#c8e5f2</color>
     <color name="selected_message">#36735bf2</color>
+    <color name="orange">#f4af01</color>
 </resources>

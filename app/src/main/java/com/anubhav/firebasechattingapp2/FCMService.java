@@ -84,10 +84,11 @@ public class FCMService extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
+
         NotificationCompat.Builder notificationBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(this)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationBody)
-                .setSmallIcon(R.mipmap.default_profile_image)
+                .setSmallIcon(R.drawable.ic_notification_profile)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);

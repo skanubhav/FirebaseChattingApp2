@@ -410,10 +410,12 @@ public class ChatActivity extends AppCompatActivity {
                 initializeLocalData();
                 initializeCloudData();
                 displayChatMessages();
+                String filePath = forwardMessage.getLocalMediaURL();
                 sendData(forwardMessage.getMessageText(),
                         forwardMessage.getContentType(),
                         forwardMessage.getThumbnailURL(),
-                        forwardMessage.getLocalMediaURL());
+                        filePath,
+                        filePath.substring(filePath.lastIndexOf("/")+1));
                 showToast("Message Forwarded");
             }
             selectedPosition = -1;
@@ -573,7 +575,7 @@ public class ChatActivity extends AppCompatActivity {
                             showToast("Input cannot be empty");
                         }
                         else {
-                            sendData(message_input.getText().toString(),ChatMessage.TEXT, null, "");
+                            sendData(message_input.getText().toString(),ChatMessage.TEXT, null, "", null);
                         }
                     }
                 });
@@ -1046,7 +1048,7 @@ public class ChatActivity extends AppCompatActivity {
                         String status;
                         if(task.isSuccessful()) {
                             try {
-                                sendData(task.getResult().toString(), contentType, null, getPath(context, data));
+                                sendData(task.getResult().toString(), contentType, null, getPath(context, data), fileName);
                             } catch (URISyntaxException e) {
                                 e.printStackTrace();
                             }
@@ -1232,7 +1234,7 @@ public class ChatActivity extends AppCompatActivity {
 
 
     // Send Text data
-    private void sendData(String data, int contentType, String thumbnailURL, String localMediaURL) {
+    private void sendData(String data, int contentType, String thumbnailURL, String localMediaURL, String fileName) {
         long Time = new Date().getTime();
 
         ContentValues values = new ContentValues();
@@ -1307,14 +1309,11 @@ public class ChatActivity extends AppCompatActivity {
 
         if(contentType==ChatMessage.TEXT)
             sendNotification( data);
-        else if(contentType==ChatMessage.IMAGE)
-            sendNotification( "Image");
-        else if(contentType==ChatMessage.VIDEO)
-            sendNotification( "Video");
-        else if(contentType==ChatMessage.AUDIO)
-            sendNotification("Audio");
-        else if(contentType==ChatMessage.DOCUMENT)
-            sendNotification("Document");
+        else {
+            if(fileName!=null)
+                sendNotification( fileName);
+        }
+
     }
 
     private void sendNotification(String data) {
